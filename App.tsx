@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Button } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, Button, Platform } from 'react-native';
 import BottomTabs from './navigation/tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import HomeScreen from './screens/home';
 
 export default function App() {
 
