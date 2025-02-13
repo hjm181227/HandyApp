@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity, Text, PanResponder } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Svg, { Line } from 'react-native-svg';
 import { PERMISSIONS, request, RESULTS } from "react-native-permissions";
@@ -9,34 +9,29 @@ const CARD_HEIGHT_MM = 53.98; // 신용카드 높이 (mm)
 
 const MeasureDistanceScreen = () => {
   const [image, setImage] = useState<string | null>(null);
-  const [points, setPoints] = useState<{ x: number }[]>([]);
+  const [points, setPoints] = useState<{ x: number }[]>([{ x: 50 }, { x: 250 }]);
   const [scale, setScale] = useState<number | null>(null);
   const [imageWidth, setImageWidth] = useState<number | null>(null);
-  const [imageHeight, setImageHeight] = useState<number | null>(null);
+  const [distance, setDistance] = useState<number | null>(null);
 
   const requestPermissions = async () => {
     const cameraPermission = await request(PERMISSIONS.ANDROID.CAMERA);
     const storagePermission = await request(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
-
-    console.log(cameraPermission, storagePermission);
-    if (cameraPermission === RESULTS.GRANTED && storagePermission === RESULTS.GRANTED) {
-      console.log('Permissions granted');
-    } else {
-      console.log('Permissions denied');
-    }
+    const writePermission = await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
+    return cameraPermission === RESULTS.GRANTED && storagePermission === RESULTS.GRANTED && writePermission === RESULTS.GRANTED;
   };
 
   requestPermissions();
 
-  // 이미지 선택 및 크롭
   const pickImage = async () => {
     try {
-      const selectedImage = await ImagePicker.openPicker({
-        mediaType: 'photo',
-        cropping: false,
-        cropperToolbarTitle: '신용카드 크기로 조정하세요',
-      });
+      const hasPermission = await requestPermissions();
+      // if (!hasPermission) {
+      //   console.log("권한이 필요합니다.");
+      //   return;
+      // }
 
+      const selectedImage = await ImagePicker.openPicker({ mediaType: 'photo', cropping: false });
       const result = await ImagePicker.openCropper({
         mediaType: 'photo',
         path: selectedImage.path,
@@ -45,88 +40,67 @@ const MeasureDistanceScreen = () => {
       });
 
       const imageUri = result.sourceURL || (result.path.startsWith('file://') ? result.path : `file://${result.path}`);
-      // const imageUri = result.sourceURL || result.path; // iOS와 Android 호환 처리
-      if (!imageUri) throw new Error('Image path not found');
+      if (!imageUri) throw new Error('이미지를 찾을 수 없습니다.');
 
       setImage(imageUri);
-      setPoints([]);
+      setPoints([{ x: 50 }, { x: 250 }]);
       setScale(null);
+      setDistance(null);
     } catch (error) {
-      console.error('Image selection error:', error);
+      console.error('이미지 선택 오류:', error);
     }
   };
 
-  // 터치하여 두 개의 점 선택 (수직선의 x좌표 기록)
-  const handleTouch = (event: any) => {
-    if (image && points.length < 2) {
-      const { locationX } = event.nativeEvent;
-      setPoints([...points, { x: locationX }]);
-    }
-  };
-
-  // 두 수직선 간 거리 계산 (픽셀 -> mm 변환)
   const calculateDistance = () => {
-    if (points.length < 2 || !scale) return null;
-    const [p1, p2] = points;
-    const pixelDistance = Math.abs(p2.x - p1.x); // 세로선 거리 계산
-    const distanceInMm = (pixelDistance / scale).toFixed(2); // mm 단위로 변환 후 소수점 처리
-
-    const decimalPart = parseFloat(distanceInMm.split('.')[1] || '0');
-
-    // 소수점 첫째 자리가 3 이하일 경우 버리고, 4 이상일 경우 올림 처리
-    const roundedDistance =
-      decimalPart <= 3
-        ? Math.floor(parseFloat(distanceInMm))
-        : Math.ceil(parseFloat(distanceInMm));
-
-    return roundedDistance;
+    if (points.length < 2 || !scale) return;
+    const pixelDistance = Math.abs(points[1].x - points[0].x);
+    setDistance(Math.round(pixelDistance / scale));
   };
 
-  // 신용카드 크기를 기준으로 픽셀-실제 크기 비율 계산
   const onImageLoad = (event: any) => {
-    const { width, height } = event.nativeEvent.source;
+    const { width } = event.nativeEvent.source;
     setImageWidth(width);
-    setImageHeight(height);
     setScale(width / CARD_WIDTH_MM);
   };
+
+  const createPanResponder = (index: number) =>
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        setPoints((prevPoints) => {
+          const newPoints = [...prevPoints];
+          newPoints[index] = { x: Math.max(0, Math.min(imageWidth || 300, newPoints[index].x + gestureState.dx)) };
+          return newPoints;
+        });
+      },
+    });
 
   return (
     <View style={styles.container}>
       {image ? (
-        <TouchableOpacity onPress={handleTouch} activeOpacity={1}>
-          <View>
-            <Image source={{ uri: image }} style={styles.image} onLoad={onImageLoad} />
-
-            {/* 선택한 두 개의 수직선 표시 */}
-            {imageWidth && imageHeight && (
-              <Svg style={[styles.svg, { width: imageWidth, height: imageHeight }]}>
-                {points.map((point, index) => (
-                  <Line
-                    key={index}
-                    x1={point.x}
-                    y1={0}
-                    x2={point.x}
-                    y2={imageHeight}
-                    stroke="red"
-                    strokeWidth={2}
-                  />
-                ))}
-              </Svg>
-            )}
-          </View>
-        </TouchableOpacity>
+        <View>
+          <Image source={{ uri: image }} style={styles.image} onLoad={onImageLoad} />
+          <Svg style={[styles.svg, { width: imageWidth, height: 200 }]}>
+            {points.map((point, index) => (
+              <Line key={index} x1={point.x} y1={0} x2={point.x} y2={200} stroke="red" strokeWidth={2} {...createPanResponder(index).panHandlers} />
+            ))}
+          </Svg>
+        </View>
       ) : (
         <Text style={styles.infoText}>이미지를 선택해주세요</Text>
       )}
 
-      {points.length === 2 && (
-        <Text style={styles.resultText}>
-          평행선 간 거리: {calculateDistance()} mm
-        </Text>
+      {distance !== null && (
+        <Text style={styles.resultText}>거리: {distance} mm</Text>
       )}
 
-      <TouchableOpacity style={styles.button} onPress={() => requestPermissions().then(() => pickImage())}>
+      <TouchableOpacity style={styles.button} onPress={pickImage}>
         <Text style={styles.buttonText}>이미지 선택</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={calculateDistance}>
+        <Text style={styles.buttonText}>확인</Text>
       </TouchableOpacity>
     </View>
   );
@@ -152,7 +126,7 @@ const styles = StyleSheet.create({
     left: 0,
   },
   button: {
-    marginTop: 20,
+    marginTop: 10,
     backgroundColor: '#007bff',
     paddingVertical: 10,
     paddingHorizontal: 20,
