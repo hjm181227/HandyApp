@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, Text, PanResponder, Alert } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Svg, { Line, Circle } from 'react-native-svg';
 import { PixelRatio } from 'react-native';
 
 const CARD_WIDTH_MM = 85.6;
+const CARD_HEIGHT_MM = 53.98;
 const ppi = PixelRatio.get() * 160;
 const pixelPerMm = ppi / 25.4;
-console.log("Pixel per mm:", ppi, pixelPerMm);
 //53.5mm = 300px;
+// 1px = 0.178mm
 
 const MeasureDistanceScreen = () => {
   const [image, setImage] = useState<string | null>(null);
@@ -36,7 +37,6 @@ const MeasureDistanceScreen = () => {
   // };
 
   const pickImage = async () => {
-    console.log(ppi, pixelPerMm);
     try {
       const selectedImage = await ImagePicker.openPicker({ mediaType: 'photo' });
       const result = await ImagePicker.openCropper({
@@ -45,8 +45,7 @@ const MeasureDistanceScreen = () => {
         width: 428,
         height: 269.9,
       });
-      console.log('selectedImage: ', selectedImage);
-      console.log('cropped image: ', result);
+
       const imageUri = result.path.startsWith('file://') ? result.path : `file://${result.path}`;
       setImage(imageUri);
       setScale(null);
@@ -56,11 +55,19 @@ const MeasureDistanceScreen = () => {
   };
 
   const onImageLoad = (event: any) => {
+    console.log(event);
     const { width, height } = event.nativeEvent.source;
     setImageWidth(width);
     setImageHeight(height);
     setScale(428/300);
+    console.log('Image Width:', width);
+    console.log('Image Height:', height);
+
   };
+
+  useEffect(() => {
+    console.log('Updated Image Height:', imageHeight);
+  }, [imageHeight]); // imageHeight 변경될 때 로그 확인
 
   const calculateDistance = () => {
 
@@ -92,28 +99,28 @@ const MeasureDistanceScreen = () => {
         <View>
           <Image source={{ uri: image }} style={styles.image} onLoad={onImageLoad} />
           {imageWidth && imageHeight && (
-            <Svg style={[styles.svg, { width: imageWidth, height: imageHeight }]}>
+            <Svg style={[styles.svg, { width: 300, height: 230 }]}>
               {points.map((point, index) => (
                 <React.Fragment key={index}>
                   <Line
                     key={index}
                     x1={point.x}
-                    y1={-50}
+                    y1={15}
                     x2={point.x}
-                    y2={imageHeight}
+                    y2={200}
                     stroke="black"
                     strokeWidth={2}
                   />
                   <Circle
                     cx={point.x}
-                    cy={10}
+                    cy={15}
                     r={10}
-                    fill="black"
+                    fill="red"
                     {...panResponder(index).panHandlers}
                   />
                   <Circle
                     cx={point.x}
-                    cy={imageHeight - 10}
+                    cy={215}
                     r={10}
                     fill="black"
                     {...panResponder(index).panHandlers}

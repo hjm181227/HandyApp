@@ -48,5 +48,19 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSPhotoLibraryUsageDescription</key>
+    <string>앱에서 사진을 선택하려면 접근 권한이 필요합니다.</string>
+
+    <key>NSCameraUsageDescription</key>
+    <string>카메라를 사용하여 사진을 촬영하려면 권한이 필요합니다.</string>
+
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>편집된 사진을 저장하려면 접근 권한이 필요합니다.</string>
+
+    <key>UIAppFonts</key>
+    <array>
+      <string>MaterialCommunityIcons.ttf</string>
+      <string>Ionicons.ttf</string>
+    </array>
 </dict>
 </plist>
