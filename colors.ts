@@ -9,11 +9,19 @@ const HandyColors = {
   primary20: '#F0D4CB',
   primary10: '#F5E1DA',
 
+  grayLightest: '#E8EBED',
+  grayLighter: '#C9CDD2',
+  grayLight: '#9EA4AA',
+  gray: '#72787F',
+  grayDark: '#454C53',
+  grayDarker: '#26282B',
+  grayDarkest: '#1B1D1F',
+
   vanilla: '#FFF8E7',
   blossom: '#FFDEE9',
 
   secondary: '#03DAC6',
-  background: '#FFFFFF',
+  background: '#F5F5F5',
   surface: '#F5F5F5',
   error: '#B00020',
   textPrimary: '#000000',
@@ -47,6 +55,18 @@ const HandyColorsRGBA = {
   border: '#E0E0E0',
   success: '#4CAF50',
   warning: '#FFC107',
+};
+
+export const colors = {
+  primary: HandyColors.primary90,
+  background: HandyColors.background,
+  text: HandyColors.textPrimary,
+  textSecondary: HandyColors.textSecondary,
+  surface: HandyColors.surface,
+  error: HandyColors.error,
+  success: HandyColors.success,
+  warning: HandyColors.warning,
+  border: HandyColors.border,
 };
 
 export default HandyColors;

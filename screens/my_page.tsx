@@ -1,23 +1,98 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, Alert } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
+import { Text, List, IconButton, Avatar } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/stack';
+import HandyColors from "../colors";
 
-const MyPageScreen = ({ navigation }) => {
-    return (
-        <View style={styles.container}>
-            <Text>My Page Screen</Text>
-            <Button 
-                title="Click Here"
-                onPress={() => Alert.alert('Button Clicked!')}></Button>
-        </View>
-    )
+type MyPageScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MyPage'>;
+
+const MyPageScreen = () => {
+  const navigation = useNavigation<MyPageScreenNavigationProp>();
+
+  const menuItems = [
+    { title: '주문내역', description: '', icon: 'receipt', onPress: () => {} },
+    { title: '최근 본 상품', icon: 'history', onPress: () => {} },
+    { title: '나의 맞춤 정보', description: '손톱 사이즈 측정하고 맞춤 주문 하기', icon: 'account-heart', onPress: () => {} },
+    { title: '고객센터', icon: 'headphones', onPress: () => {} },
+    { title: '1:1 문의 내역', icon: 'message-text', onPress: () => {} },
+    { title: '상품 문의 내역', icon: 'comment-question', onPress: () => {} },
+    { title: '공지사항', icon: 'bell', onPress: () => {} },
+  ];
+
+  return (
+    <View style={styles.container}>
+      {/* Header Icons */}
+      <View style={styles.headerIcons}>
+        <IconButton
+          icon="bell"
+          size={24}
+          onPress={() => {}}
+        />
+        <IconButton
+          icon="cog"
+          size={24}
+          onPress={() => navigation.navigate('Setting')}
+        />
+        <IconButton
+          icon="cart"
+          size={24}
+          onPress={() => {}}
+        />
+      </View>
+
+      {/* User Info Section */}
+      <View style={styles.userInfoSection}>
+        <Avatar.Icon
+          size={80}
+          icon={"account"}
+        />
+        <Text style={styles.userName}>허정민</Text>
+      </View>
+
+      {/* Menu List */}
+      <View style={styles.menuList}>
+        {menuItems.map((item, index) => (
+          <List.Item
+            key={index}
+            title={item.title}
+            description={item.description}
+            descriptionStyle={{ fontSize: 12, color: HandyColors.grayLight }}
+            left={props => <List.Icon {...props} icon={item.icon} />}
+            right={props => <List.Icon {...props} icon="chevron-right" />}
+            onPress={item.onPress}
+          />
+        ))}
+      </View>
+    </View>
+  );
 };
 
-export default MyPageScreen;
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 8,
+  },
+  userInfoSection: {
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+  menuList: {
+    flex: 1,
+  },
 });
+
+export default MyPageScreen;

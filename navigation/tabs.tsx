@@ -6,6 +6,8 @@ import MeasureDistanceScreen from "../screens/camera";
 import { BottomNavigation, Icon } from "react-native-paper";
 import { CommonActions } from '@react-navigation/native';
 import SnapPage from "../screens/snap_page";
+import CategoryScreen from "../screens/category";
+import CartScreen from "../screens/CartScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -15,7 +17,7 @@ const BottomTabs = () => {
       screenOptions={{
         headerShown: false,
       }}
-      initialRouteName="heart"
+      initialRouteName="home-variant"
       tabBar={({ navigation, state, descriptors, insets }) => (
         <BottomNavigation.Bar
           shifting={false}
@@ -68,7 +70,7 @@ const BottomTabs = () => {
       )}
     >
       <Tab.Screen name="text-box-search"
-                  component={HomeScreen}
+                  component={CategoryScreen}
                   options={{
                     tabBarLabel: '카테고리',
                     tabBarIcon: ({ color, size }) => {
@@ -101,6 +103,15 @@ const BottomTabs = () => {
                     tabBarLabel: '스냅',
                     tabBarIcon: ({ color, size }) => {
                       return <Icon source="heart" size={size} color={color}/>;
+                    },
+                  }}
+      ></Tab.Screen>
+      <Tab.Screen name="cart"
+                  component={CartScreen}
+                  options={{
+                    tabBarLabel: '장바구니',
+                    tabBarIcon: ({ color, size }) => {
+                      return <Icon source="cart" size={size} color={color}/>;
                     },
                   }}
       ></Tab.Screen>

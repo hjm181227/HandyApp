@@ -1,19 +1,21 @@
+import 'react-native-gesture-handler';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import BottomTabs from './navigation/tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { PaperProvider } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import RootStack from './navigation/stack';
 
 export default function App() {
-
   return (
-    <PaperProvider>
-      <NavigationContainer>
-        <BottomTabs/>
-      </NavigationContainer>
-    </PaperProvider>
-  )
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PaperProvider>
+        <NavigationContainer>
+          <RootStack />
+        </NavigationContainer>
+      </PaperProvider>
+    </GestureHandlerRootView>
+  );
 }
 
 const styles = StyleSheet.create({
