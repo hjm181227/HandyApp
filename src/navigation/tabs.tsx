@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import HomeScreen from "../screens/home";
+import HomeScreen from "../screens/HomeScreen";
 import MyPageScreen from '../screens/my_page';
 import MeasureDistanceScreen from "../screens/camera";
 import { BottomNavigation, Icon } from "react-native-paper";
@@ -8,6 +8,7 @@ import { CommonActions } from '@react-navigation/native';
 import SnapPage from "../screens/snap_page";
 import CategoryScreen from "../screens/category";
 import CartScreen from "../screens/CartScreen";
+import ProductUploadScreen from "../screens/ProductUploadScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -80,7 +81,7 @@ const BottomTabs = () => {
       >
       </Tab.Screen>
       <Tab.Screen name="camera"
-                  component={MeasureDistanceScreen}
+                  component={ProductUploadScreen}
                   options={{
                     tabBarLabel: '카메라',
                     tabBarIcon: ({ color, size }) => {
@@ -103,15 +104,6 @@ const BottomTabs = () => {
                     tabBarLabel: '스냅',
                     tabBarIcon: ({ color, size }) => {
                       return <Icon source="heart" size={size} color={color}/>;
-                    },
-                  }}
-      ></Tab.Screen>
-      <Tab.Screen name="cart"
-                  component={CartScreen}
-                  options={{
-                    tabBarLabel: '장바구니',
-                    tabBarIcon: ({ color, size }) => {
-                      return <Icon source="cart" size={size} color={color}/>;
                     },
                   }}
       ></Tab.Screen>

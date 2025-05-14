@@ -18,7 +18,7 @@ const SnapPage = () => {
   const renderHeader = () => (
     <View style={styles.header}>
       <Image
-        source={require('../assets/images/logo.png')}
+        source={require('../../assets/images/logo.png')}
         style={styles.logo}
         resizeMode="cover"
       />
@@ -88,7 +88,7 @@ const SnapPage = () => {
         <View key={index} style={styles.imageContainer}>
           <Image
             // source={{ uri: 'https://picsum.photos/400/500' }}
-            source={require('../assets/images/nail1.png')}
+            source={require('../../assets/images/nail1.png')}
             style={styles.image}
           />
           <IconButton

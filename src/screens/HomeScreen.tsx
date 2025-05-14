@@ -1,11 +1,13 @@
 import React from 'react';
 import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Icon, Searchbar } from "react-native-paper";
-import HandyColors from "../colors";
+import HandyColors from "../../colors";
 import ItemScrollBanner from "../components/item-scroll-banner";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from '@react-navigation/native';
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = () => {
+  const navigation = useNavigation();
   const [ searchQuery, setSearchQuery ] = React.useState('');
   const tabList = [ 'recommend', 'ranking', 'sale', 'brand', 'new', 'brand_coupon', 'weekly' ];
   const [ selectedTab, setSelectedTab ] = React.useState(tabList[0]);
@@ -32,7 +34,9 @@ const HomeScreen = ({ navigation }) => {
           <Text style={{ color: 'white', fontSize: 24 }}>Handy</Text>
           <View style={styles.actionButtons}>
             <Icon source={'bell-outline'} size={22} color={'white'}/>
-            <Icon source={'shopping-outline'} size={22} color={'white'}/>
+            <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
+              <Icon source={'shopping-outline'} size={22} color={'white'}/>
+            </TouchableOpacity>
           </View>
         </View>
         <View>
@@ -76,7 +80,7 @@ const HomeScreen = ({ navigation }) => {
             <Image
               style={ styles.image }
               resizeMode='contain'
-              source={ require('../assets/images/banner.png') }
+              source={ require('../../assets/images/banner.png') }
             />
           </TouchableOpacity>
         </View>

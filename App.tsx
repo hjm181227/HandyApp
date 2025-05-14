@@ -1,31 +1,59 @@
-import 'react-native-gesture-handler';
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { PaperProvider } from "react-native-paper";
+import { createStackNavigator } from '@react-navigation/stack';
+import { UserProvider, useUser } from './src/context/UserContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import RootStack from './navigation/stack';
 
-export default function App() {
+import LoginScreen from './src/screens/LoginScreen';
+import SignupScreen from './src/screens/SignupScreen';
+import RootStack from "./src/navigation/stack";
+
+const Stack = createStackNavigator();
+
+const Navigation = () => {
+  const { token } = useUser();
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animationEnabled: true,
+        gestureEnabled: true,
+      }}
+    >
+      {token == null ? (
+        // 인증되지 않은 상태
+        <>
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+          />
+          <Stack.Screen
+            name="Signup"
+            component={SignupScreen}
+          />
+        </>
+      ) : (
+        // 인증된 상태
+        <Stack.Screen
+          name="Home"
+          component={RootStack}
+        />
+      )}
+    </Stack.Navigator>
+  );
+};
+
+const App = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <PaperProvider>
+      <UserProvider>
         <NavigationContainer>
-          <RootStack />
+          <Navigation />
         </NavigationContainer>
-      </PaperProvider>
+      </UserProvider>
     </GestureHandlerRootView>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  counterText: {
-    fontSize: 32,
-    marginBottom: 16,
-  },
-});
+export default App;

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Searchbar, IconButton, Avatar, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import HandyColors from '../colors';
+import HandyColors from '../../colors';
+import { useNavigation } from '@react-navigation/native';
 
 type CategoryOption = {
   name: string;
@@ -41,6 +42,7 @@ const categoryOptions: CategoryOption[] = [
 ];
 
 const CategoryScreen = () => {
+  const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('category');
   const [selectedOption, setSelectedOption] = useState(categoryOptions[0]);
@@ -57,9 +59,9 @@ const CategoryScreen = () => {
           inputStyle={{ fontSize: 16, padding: 0, minHeight: 0 }}
         />
         <IconButton
-          icon="cart-outline"
+          icon="shopping-outline"
           size={24}
-          onPress={() => {}}
+          onPress={() => navigation.navigate('Cart')}
           style={styles.cartButton}
         />
       </View>

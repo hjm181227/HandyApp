@@ -59,7 +59,7 @@ const ItemScrollBanner = ({ items, title }: { items: Item[], title: string }) =>
                 }}
               >
                 <Image
-                  source={require('../assets/images/nail1.png')}
+                  source={require('../../assets/images/nail1.png')}
                   style={{
                     width: itemWidth - 24,
                     height: itemWidth - 24,

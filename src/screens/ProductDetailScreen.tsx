@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import { colors } from '../colors';
+import { colors } from '../../colors';
 import { Icon } from 'react-native-paper';
 
 type ProductDetailParams = {
@@ -126,7 +126,7 @@ const ProductDetailScreen = () => {
       >
         <Image
           // source={{ uri: image }}
-          source={require('../assets/images/nail1.png')}
+          source={require('../../assets/images/nail1.png')}
           style={styles.image} />
 
         {/* 상품 기본 정보 영역 */}
