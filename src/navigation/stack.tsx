@@ -12,7 +12,12 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 export type RootStackParamList = {
-  MainTabs: undefined;
+  MainTabs: {
+    screen?: string;
+    params?: {
+      screen?: string;
+    };
+  };
   ProductDetail: {
     productId: string;
     title: string;
@@ -23,6 +28,7 @@ export type RootStackParamList = {
   Setting: undefined;
   Cart: undefined;
   SellerPage: undefined;
+  ProductUpload: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -63,7 +69,7 @@ const RootStack = () => {
       }}
     >
       <Stack.Screen
-        name="MainTabs"
+        name="BottomTabs"
         component={BottomTabs}
         options={{ headerShown: false }}
       />

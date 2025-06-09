@@ -2,30 +2,27 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, FAB, IconButton } from 'react-native-paper';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/stack';
 import HandyColors from "../../colors";
+
+// Import screens
+import ProductListScreen from './seller/ProductListScreen';
+import OrderManagementScreen from './seller/OrderManagementScreen';
+import EventManagementScreen from './seller/EventManagementScreen';
+import DashboardScreen from './seller/DashboardScreen';
+import ProductInquiryScreen from './seller/ProductInquiryScreen';
+import ReviewManagementScreen from './seller/ReviewManagementScreen';
+import ProductUploadScreen from './ProductUploadScreen';
 
 const Drawer = createDrawerNavigator();
 
-// Placeholder screens - we'll implement these later
-const ProductListScreen = () => (
-  <View style={styles.container}>
-    <Text>상품 목록</Text>
-    <FAB
-      style={styles.fab}
-      icon="plus"
-      onPress={() => {}}
-      label="상품 등록"
-    />
-  </View>
-);
-
-const OrderManagementScreen = () => <View style={styles.container}><Text>주문 관리</Text></View>;
-const EventManagementScreen = () => <View style={styles.container}><Text>이벤트/할인 관리</Text></View>;
-const DashboardScreen = () => <View style={styles.container}><Text>대시보드</Text></View>;
-const ProductInquiryScreen = () => <View style={styles.container}><Text>상품 문의</Text></View>;
-const ReviewManagementScreen = () => <View style={styles.container}><Text>리뷰 관리</Text></View>;
+type SellerPageNavigationProp = StackNavigationProp<RootStackParamList, 'SellerPage'>;
 
 const SellerPage = () => {
+  const navigation = useNavigation<SellerPageNavigationProp>();
+
   return (
     <Drawer.Navigator
       initialRouteName="ProductList"
@@ -37,7 +34,14 @@ const SellerPage = () => {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-        headerLeft: () => null, // Remove the default hamburger menu
+        headerLeft: () => (
+          <IconButton
+            icon="arrow-left"
+            size={24}
+            iconColor="#fff"
+            onPress={() => navigation.goBack()}
+          />
+        ),
         drawerPosition: 'right', // Move drawer to the right side
         drawerType: 'front', // Drawer will appear on top of the screen
         overlayColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent overlay
@@ -107,6 +111,14 @@ const SellerPage = () => {
           drawerIcon: ({ color, size }) => (
             <IconButton icon="star" size={size} iconColor={color} />
           ),
+        }}
+      />
+      <Drawer.Screen
+        name="ProductUpload"
+        component={ProductUploadScreen}
+        options={{
+          title: '상품 등록',
+          drawerItemStyle: { display: 'none' }, // Hide from drawer menu
         }}
       />
     </Drawer.Navigator>

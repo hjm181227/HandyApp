@@ -11,54 +11,41 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { uploadProduct, Shape, TPO, ProductImage } from '../services/productService';
+import { uploadProduct, Shape, ProductSize, ProductImage } from '../services/productService';
+import ImageUploader from '../components/ImageUploader';
+import { Checkbox } from 'react-native-paper';
 
 type ProductUploadScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProductUpload'>;
 
 const ProductUploadScreen = () => {
   const navigation = useNavigation<ProductUploadScreenNavigationProp>();
-  const [mainImage, setMainImage] = useState<string | null>(null);
+  const [mainImage, setMainImage] = useState<ProductImage | null>(null);
   const [productName, setProductName] = useState('');
   const [productDescription, setProductDescription] = useState('');
   const [selectedShape, setSelectedShape] = useState<Shape>('round');
+  const [shapeChangable, setShapeChangable] = useState(false);
+  const [selectedLength, setSelectedLength] = useState<ProductSize>('MEDIUM');
+  const [lengthChangable, setLengthChangable] = useState(false);
+  const [isCustomizable, setIsCustomizable] = useState(false);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [price, setPrice] = useState('');
   const [productionTime, setProductionTime] = useState('');
-  const [selectedTPOs, setSelectedTPOs] = useState<TPO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const pickMainImage = async () => {
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
-      quality: 1,
-      selectionLimit: 1,
-    });
-
-    if (result.assets && result.assets[0]) {
-      setMainImage(result.assets[0].uri || null);
-    }
+  const handleMainImageUpload = (presignedUrl: string) => {
+    setMainImage({ imageUrl: presignedUrl });
   };
 
-  const pickProductImages = async () => {
+  const handleProductImageUpload = (presignedUrl: string) => {
     if (productImages.length >= 5) {
       Alert.alert('알림', '최대 5장까지만 업로드 가능합니다.');
       return;
     }
-
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
-      quality: 1,
-      selectionLimit: 1,
-    });
-
-    if (result.assets && result.assets[0]) {
-      setProductImages([...productImages, { uri: result.assets[0].uri || '', description: '' }]);
-    }
+    setProductImages([...productImages, { imageUrl: presignedUrl, description: '' }]);
   };
 
   const updateImageDescription = (index: number, description: string) => {
@@ -72,67 +59,57 @@ const ProductUploadScreen = () => {
     setProductImages(newImages);
   };
 
-  const toggleTPO = (tpo: TPO) => {
-    if (selectedTPOs.includes(tpo)) {
-      setSelectedTPOs(selectedTPOs.filter(t => t !== tpo));
-    } else {
-      setSelectedTPOs([...selectedTPOs, tpo]);
-    }
-  };
-
   const validateForm = (): boolean => {
     if (!mainImage) {
       Alert.alert('알림', '대표 이미지를 선택해주세요.');
       return false;
     }
-    
+
     if (!productName.trim()) {
       Alert.alert('알림', '상품명을 입력해주세요.');
       return false;
     }
-    
+
     if (!productDescription.trim()) {
       Alert.alert('알림', '상품 설명을 입력해주세요.');
       return false;
     }
-    
+
     if (!price.trim()) {
       Alert.alert('알림', '가격을 입력해주세요.');
       return false;
     }
-    
+
     if (!productionTime.trim()) {
       Alert.alert('알림', '제작 소요 시간을 입력해주세요.');
       return false;
     }
-    
-    if (selectedTPOs.length === 0) {
-      Alert.alert('알림', '최소 하나 이상의 TPO를 선택해주세요.');
-      return false;
-    }
-    
+
     return true;
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
+    if (!validateForm() || !mainImage) {
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const result = await uploadProduct({
         mainImage,
-        productName,
-        productDescription,
-        selectedShape,
-        productImages,
-        price,
-        productionTime,
-        selectedTPOs,
+        name: productName,
+        description: productDescription,
+        shape: selectedShape,
+        shapeChangable,
+        length: selectedLength,
+        lengthChangable,
+        isCustomizable,
+        detailImages: productImages,
+        price: parseInt(price, 10),
+        productionTime: parseInt(productionTime, 10),
       });
-      
+
       if (result.success) {
         Alert.alert('성공', '상품이 성공적으로 등록되었습니다.', [
           { text: '확인', onPress: () => navigation.goBack() }
@@ -149,13 +126,11 @@ const ProductUploadScreen = () => {
     <ScrollView style={styles.container}>
       <View style={styles.section}>
         <Text style={styles.label}>대표 이미지</Text>
-        <TouchableOpacity style={styles.imageUpload} onPress={pickMainImage}>
-          {mainImage ? (
-            <Image source={{ uri: mainImage }} style={styles.mainImage} />
-          ) : (
-            <Text>이미지 선택</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.imageUpload}>
+          <ImageUploader
+            onUploadSuccess={handleMainImageUpload}
+          />
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -192,6 +167,43 @@ const ProductUploadScreen = () => {
           <Picker.Item label="스퀘어" value="square" />
           <Picker.Item label="코핀" value="coffin" />
         </Picker>
+        <View style={styles.checkboxContainer}>
+          <Checkbox
+            status={shapeChangable ? 'checked' : 'unchecked'}
+            onPress={() => setShapeChangable(!shapeChangable)}
+          />
+          <Text style={styles.checkboxLabel}>쉐입 변경 가능</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>길이</Text>
+        <Picker
+          selectedValue={selectedLength}
+          onValueChange={(value) => setSelectedLength(value as ProductSize)}
+          style={styles.picker}
+        >
+          <Picker.Item label="숏" value="SHORT" />
+          <Picker.Item label="미디움" value="MEDIUM" />
+          <Picker.Item label="롱" value="LONG" />
+        </Picker>
+        <View style={styles.checkboxContainer}>
+          <Checkbox
+            status={lengthChangable ? 'checked' : 'unchecked'}
+            onPress={() => setLengthChangable(!lengthChangable)}
+          />
+          <Text style={styles.checkboxLabel}>길이 변경 가능</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.checkboxContainer}>
+          <Checkbox
+            status={isCustomizable ? 'checked' : 'unchecked'}
+            onPress={() => setIsCustomizable(!isCustomizable)}
+          />
+          <Text style={styles.checkboxLabel}>커스텀 가능 여부</Text>
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -199,7 +211,7 @@ const ProductUploadScreen = () => {
         <ScrollView horizontal style={styles.imageScroll}>
           {productImages.map((image, index) => (
             <View key={index} style={styles.imageBlock}>
-              <Image source={{ uri: image.uri }} style={styles.productImage} />
+              <Image source={{ uri: image.imageUrl }} style={styles.productImage} />
               <TextInput
                 style={styles.imageDescription}
                 value={image.description}
@@ -215,9 +227,13 @@ const ProductUploadScreen = () => {
             </View>
           ))}
           {productImages.length < 5 && (
-            <TouchableOpacity style={styles.addImageButton} onPress={pickProductImages}>
-              <Text>이미지 추가</Text>
-            </TouchableOpacity>
+            <View style={styles.addImageButton}>
+              <ImageUploader
+                onUploadSuccess={handleProductImageUpload}
+                label={productImages.length == 0 ? "상세 이미지 & 설명 추가" : ""}
+                iconName={productImages.length == 0 ? undefined : "plus"}
+              />
+            </View>
           )}
         </ScrollView>
       </View>
@@ -244,36 +260,8 @@ const ProductUploadScreen = () => {
         />
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.label}>TPO</Text>
-        <View style={styles.tpoContainer}>
-          {(['daily', 'party', 'wedding', 'performance'] as TPO[]).map((tpo) => (
-            <TouchableOpacity
-              key={tpo}
-              style={[
-                styles.tpoButton,
-                selectedTPOs.includes(tpo) && styles.tpoButtonActive,
-              ]}
-              onPress={() => toggleTPO(tpo)}
-            >
-              <Text
-                style={[
-                  styles.tpoButtonText,
-                  selectedTPOs.includes(tpo) && styles.tpoButtonTextActive,
-                ]}
-              >
-                {tpo === 'daily' && '데일리'}
-                {tpo === 'party' && '파티'}
-                {tpo === 'wedding' && '웨딩'}
-                {tpo === 'performance' && '공연'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <TouchableOpacity 
-        style={[styles.submitButton, isLoading && styles.submitButtonDisabled]} 
+      <TouchableOpacity
+        style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
         onPress={handleSubmit}
         disabled={isLoading}
       >
@@ -314,13 +302,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mainImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
+    overflow: 'hidden',
   },
   picker: {
     borderWidth: 1,
@@ -333,6 +315,7 @@ const styles = StyleSheet.create({
   imageBlock: {
     marginRight: 16,
     width: 200,
+    flexDirection: 'column',
   },
   productImage: {
     width: 200,
@@ -362,30 +345,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tpoContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  tpoButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  tpoButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  tpoButtonText: {
-    color: '#000',
-  },
-  tpoButtonTextActive: {
-    color: '#fff',
+    overflow: 'hidden',
   },
   submitButton: {
     backgroundColor: '#007AFF',
@@ -403,6 +363,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+  },
 });
 
-export default ProductUploadScreen; 
+export default ProductUploadScreen;

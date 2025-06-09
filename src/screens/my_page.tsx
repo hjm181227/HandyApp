@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image, Alert, InteractionManager } from 'react-native';
 import { Text, List, IconButton, Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -11,7 +11,36 @@ type MyPageScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MyPag
 
 const MyPageScreen = () => {
   const navigation = useNavigation<MyPageScreenNavigationProp>();
-  const { userData } = useUser();
+  const { userData, logout } = useUser();
+
+  const handleLogout = () => {
+    InteractionManager.runAfterInteractions(() => {
+      Alert.alert(
+        '로그아웃',
+        '정말 로그아웃 하시겠습니까?',
+        [
+          {
+            text: '취소',
+            style: 'cancel',
+          },
+          {
+            text: '로그아웃',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await logout();
+              } catch (error) {
+                console.error('Logout failed:', error);
+                InteractionManager.runAfterInteractions(() => {
+                  Alert.alert('오류', '로그아웃 중 문제가 발생했습니다.');
+                });
+              }
+            },
+          },
+        ],
+      );
+    });
+  };
 
   const menuItems = [
     { title: '주문내역', description: '', icon: 'receipt', onPress: () => {} },
@@ -22,6 +51,7 @@ const MyPageScreen = () => {
     { title: '1:1 문의 내역', icon: 'message-text', onPress: () => {} },
     { title: '상품 문의 내역', icon: 'comment-question', onPress: () => {} },
     { title: '공지사항', icon: 'bell', onPress: () => {} },
+    { title: '로그아웃', icon: 'logout', onPress: handleLogout, titleStyle: { color: HandyColors.primary90 } }
   ];
 
   return (
@@ -62,9 +92,10 @@ const MyPageScreen = () => {
             title={item.title}
             description={item.description}
             descriptionStyle={{ fontSize: 12, color: HandyColors.grayLight }}
-            left={props => <List.Icon {...props} icon={item.icon} />}
+            left={props => <List.Icon {...props} icon={item.icon} color={item.titleStyle?.color} />}
             right={props => <List.Icon {...props} icon="chevron-right" />}
             onPress={item.onPress}
+            titleStyle={item.titleStyle}
           />
         ))}
       </View>

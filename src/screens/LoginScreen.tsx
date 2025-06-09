@@ -1,90 +1,105 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ToastAndroid,
-  Platform,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState } from 'react';
+import { View, StyleSheet, Image, Alert, InteractionManager } from 'react-native';
+import { Text, TextInput, Button } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/stack';
+import HandyColors from "../../colors";
 import { useUser } from '../context/UserContext';
-import api from '../api/axios';
+import { login } from '../api/user';
 
-const LoginScreen = ({ navigation }) => {
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+
+const LoginScreen = () => {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { setToken, setUserData } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { setUserData, setToken, token } = useUser();
-
-  useEffect(() => {
-    // 자동 로그인 처리
-    if (token) {
-      navigation.replace('Home');
-      showToastMessage('자동 로그인 성공');
-    }
-  }, [token, navigation]);
-
-  const showToastMessage = (message) => {
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, ToastAndroid.LONG);
-    } else {
-      Alert.alert('알림', message);
-    }
-  };
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('오류', '이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const response = await api.post('/auth/login', {
-        email,
-        password,
-      });
+      const response = await login(email, password);
+      const { token, id, email: userEmail, name } = response;
 
-      const { token, ...userData } = response.data;
+      if (!token) {
+        throw new Error('로그인에 실패했습니다.');
+      }
 
-      // AsyncStorage에 저장
-      await AsyncStorage.setItem('userToken', token);
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
+      // 사용자 데이터 저장
+      const userData = {
+        id,
+        email: userEmail,
+        name,
+      };
 
-      // Context 업데이트
-      setToken(token);
-      setUserData(userData);
-
-      navigation.replace('Home');
+      // 토큰과 사용자 데이터를 AsyncStorage에 저장
+      await setToken(token);
+      await setUserData(userData);
     } catch (error) {
-      console.log('Login error:', error);
-      Alert.alert('로그인 실패', '이메일 또는 비밀번호를 확인해주세요.');
+      console.error('Login error:', error);
+      InteractionManager.runAfterInteractions(() => {
+        Alert.alert('오류', '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>로그인</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="이메일"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="비밀번호"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>로그인</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.signupButton}
-        onPress={() => navigation.navigate('Signup')}
-      >
-        <Text style={styles.signupText}>회원가입하기</Text>
-      </TouchableOpacity>
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('../../assets/images/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          label="이메일"
+          value={email}
+          onChangeText={setEmail}
+          mode="outlined"
+          style={styles.input}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          label="비밀번호"
+          value={password}
+          onChangeText={setPassword}
+          mode="outlined"
+          style={styles.input}
+          secureTextEntry
+        />
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={handleLogin}
+          style={styles.loginButton}
+          loading={isLoading}
+          disabled={isLoading}
+        >
+          로그인
+        </Button>
+        <Button
+          mode="outlined"
+          onPress={() => navigation.navigate('SignUp')}
+          style={styles.signUpButton}
+        >
+          회원가입
+        </Button>
+      </View>
     </View>
   );
 };
@@ -92,45 +107,32 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     padding: 20,
     backgroundColor: '#fff',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    textAlign: 'center',
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 60,
+    marginBottom: 40,
+  },
+  logo: {
+    width: 200,
+    height: 200,
+  },
+  inputContainer: {
+    marginBottom: 20,
   },
   input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
+    marginBottom: 16,
   },
-  button: {
-    backgroundColor: '#007AFF',
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
+  buttonContainer: {
+    gap: 12,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  loginButton: {
+    padding: 4,
   },
-  signupButton: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  signupText: {
-    color: '#007AFF',
-    fontSize: 16,
+  signUpButton: {
+    padding: 4,
   },
 });
 

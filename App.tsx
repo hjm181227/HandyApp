@@ -1,44 +1,35 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { UserProvider, useUser } from './src/context/UserContext';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
+import { RootStackParamList } from './src/navigation/stack';
 import LoginScreen from './src/screens/LoginScreen';
-import SignupScreen from './src/screens/SignupScreen';
-import RootStack from "./src/navigation/stack";
+import MainTabs from './src/navigation/tabs';
+import SettingScreen from './src/screens/setting';
+import SellerPage from './src/screens/seller_page';
+import CartScreen from './src/screens/CartScreen';
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator<RootStackParamList>();
+
+// 전역 변수로 선언
+let navigationRef: any;
 
 const Navigation = () => {
   const { token } = useUser();
+  // 컴포넌트 내부에서 hook 호출
+  navigationRef = useNavigationContainerRef();
 
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        animationEnabled: true,
-        gestureEnabled: true,
-      }}
-    >
-      {token == null ? (
-        // 인증되지 않은 상태
-        <>
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-          />
-          <Stack.Screen
-            name="Signup"
-            component={SignupScreen}
-          />
-        </>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!token ? (
+        <Stack.Screen name="Login" component={LoginScreen} />
       ) : (
-        // 인증된 상태
-        <Stack.Screen
-          name="Home"
-          component={RootStack}
-        />
+        <>
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen name="Setting" component={SettingScreen} />
+          <Stack.Screen name="SellerPage" component={SellerPage} />
+          <Stack.Screen name="Cart" component={CartScreen} />
+        </>
       )}
     </Stack.Navigator>
   );
@@ -46,13 +37,11 @@ const Navigation = () => {
 
 const App = () => {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <NavigationContainer ref={navigationRef}>
       <UserProvider>
-        <NavigationContainer>
-          <Navigation />
-        </NavigationContainer>
+        <Navigation />
       </UserProvider>
-    </GestureHandlerRootView>
+    </NavigationContainer>
   );
 };
 

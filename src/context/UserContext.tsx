@@ -1,70 +1,110 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface UserData {
-  id: number;
-  email: string;
-  name: string;
-}
+import { getCurrentUser, UserData } from '../api/user';
 
 interface UserContextType {
-  userData: UserData | null;
   token: string | null;
-  setUserData: (data: UserData | null) => void;
-  setToken: (token: string | null) => void;
+  setToken: (token: string | null) => Promise<void>;
+  userData: UserData | null;
+  setUserData: (userData: UserData | null) => Promise<void>;
   logout: () => Promise<void>;
+  handleTokenExpiration: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+export const UserProvider = ({ children }: { children: React.ReactNode }) => {
+  const [token, setTokenState] = useState<string | null>(null);
+  const [userData, setUserDataState] = useState<UserData | null>(null);
 
-  useEffect(() => {
-    // 앱 시작 시 저장된 유저 정보 로드
-    loadUserData();
-  }, []);
+  const setToken = async (newToken: string | null) => {
+    if (newToken) {
+      await AsyncStorage.setItem('token', newToken);
+    } else {
+      await AsyncStorage.removeItem('token');
+    }
+    setTokenState(newToken);
+  };
 
-  const loadUserData = async () => {
+  const setUserData = async (newUserData: UserData | null) => {
+    if (newUserData) {
+      await AsyncStorage.setItem('userData', JSON.stringify(newUserData));
+    } else {
+      await AsyncStorage.removeItem('userData');
+    }
+    setUserDataState(newUserData);
+  };
+
+  const fetchUserData = async () => {
+    if (!token) return;
+    
     try {
-      const [storedToken, storedUserData] = await Promise.all([
-        AsyncStorage.getItem('userToken'),
-        AsyncStorage.getItem('userData'),
-      ]);
-
-      if (storedToken && storedUserData) {
-        setToken(storedToken);
-        setUserData(JSON.parse(storedUserData));
-      }
+      const userData = await getCurrentUser(token);
+      await setUserData(userData);
     } catch (error) {
-      console.log('Error loading user data:', error);
+      console.error('Error fetching user data:', error);
+      // 사용자 정보를 가져오는데 실패하면 로그아웃 처리
+      await handleTokenExpiration();
     }
   };
 
+  useEffect(() => {
+    // 앱 시작 시 저장된 토큰과 사용자 데이터 로드
+    const loadStoredData = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem('token');
+        const storedUserData = await AsyncStorage.getItem('userData');
+        
+        if (storedToken) {
+          setTokenState(storedToken);
+          if (storedUserData) {
+            setUserDataState(JSON.parse(storedUserData));
+          } else {
+            // 토큰은 있지만 사용자 데이터가 없는 경우 사용자 정보를 가져옴
+            await fetchUserData();
+          }
+        }
+      } catch (error) {
+        console.error('Error loading stored data:', error);
+      }
+    };
+
+    loadStoredData();
+  }, []);
+
+  // 토큰이 변경될 때마다 사용자 정보를 가져옴
+  useEffect(() => {
+    if (token) {
+      fetchUserData();
+    }
+  }, [token]);
+
   const logout = async () => {
     try {
-      await Promise.all([
-        AsyncStorage.removeItem('userToken'),
-        AsyncStorage.removeItem('userData'),
-      ]);
-      setToken(null);
-      setUserData(null);
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('userData');
+      setTokenState(null);
+      setUserDataState(null);
     } catch (error) {
-      console.log('Error during logout:', error);
+      console.error('Logout error:', error);
+      throw error;
+    }
+  };
+
+  const handleTokenExpiration = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('userData');
+      setTokenState(null);
+      setUserDataState(null);
+    } catch (error) {
+      console.error('Token expiration error:', error);
+      throw error;
     }
   };
 
   return (
-    <UserContext.Provider
-      value={{
-        userData,
-        token,
-        setUserData,
-        setToken,
-        logout,
-      }}
-    >
+    <UserContext.Provider value={{ token, setToken, userData, setUserData, logout, handleTokenExpiration }}>
       {children}
     </UserContext.Provider>
   );

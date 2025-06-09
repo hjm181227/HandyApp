@@ -3,16 +3,11 @@ import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { colors } from '../../colors';
 import { Icon } from 'react-native-paper';
+import { ActivityIndicator } from 'react-native-paper';
+import { RootStackParamList } from '../navigation/stack';
+import { getProductDetail, ProductDetail } from '../api/product';
 
-type ProductDetailParams = {
-  ProductDetail: {
-    productId: string;
-    title: string;
-    price: number;
-    image: string;
-    description: string;
-  };
-};
+type ProductDetailScreenRouteProp = RouteProp<RootStackParamList, 'ProductDetail'>;
 
 type TabType = 'info' | 'recommend' | 'review' | 'qna';
 
@@ -21,9 +16,9 @@ const HEADER_HEIGHT = 56; // 기본 헤더 높이
 const IMAGE_HEIGHT = 300;
 
 const ProductDetailScreen = () => {
-  const route = useRoute<RouteProp<ProductDetailParams, 'ProductDetail'>>();
+  const route = useRoute<ProductDetailScreenRouteProp>();
   const navigation = useNavigation();
-  const { title, price, image, description } = route.params;
+  const { productId } = route.params;
   const screenHeight = Dimensions.get('window').height;
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -38,6 +33,28 @@ const ProductDetailScreen = () => {
     review: 0,
     qna: 0,
   });
+
+  const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProductDetail = async () => {
+      try {
+        setLoading(true);
+        const productData = await getProductDetail(productId);
+        setProduct(productData);
+        setError(null);
+      } catch (err) {
+        setError('상품 정보를 불러오는데 실패했습니다.');
+        console.error('상품 상세 정보 조회 실패:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetail();
+  }, [productId]);
 
   // 스크롤 위치에 따라 활성 탭 변경
   useEffect(() => {
@@ -112,6 +129,22 @@ const ProductDetailScreen = () => {
     extrapolate: 'clamp',
   });
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error || '상품 정보를 찾을 수 없습니다.'}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -125,14 +158,15 @@ const ProductDetailScreen = () => {
         scrollEventThrottle={16}
       >
         <Image
-          // source={{ uri: image }}
-          source={require('../../assets/images/nail1.png')}
-          style={styles.image} />
+          source={{ uri: product.imageUrl }}
+          style={styles.image}
+          resizeMode="cover"
+        />
 
         {/* 상품 기본 정보 영역 */}
         <View style={styles.basicInfoContainer}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.price}>{price.toLocaleString()}원</Text>
+          <Text style={styles.title}>{product.name}</Text>
+          <Text style={styles.price}>{product.price.toLocaleString()}원</Text>
         </View>
 
         {/* 탭 셀렉터 */}
@@ -143,7 +177,7 @@ const ProductDetailScreen = () => {
           {/* 정보 섹션 */}
           <View onLayout={onLayout('info')} style={styles.section}>
             <Text style={styles.sectionTitle}>상품 정보</Text>
-            <Text style={styles.description}>{description}</Text>
+            <Text style={styles.description}>{product.description}</Text>
           </View>
 
           {/* 추천 섹션 */}
@@ -304,6 +338,21 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#c62828',
+    textAlign: 'center',
   },
 });
 
