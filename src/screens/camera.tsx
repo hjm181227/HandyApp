@@ -11,7 +11,11 @@ const pixelPerMm = ppi / 25.4;
 //53.5mm = 300px;
 // 1px = 0.178mm
 
-const MeasureDistanceScreen = () => {
+interface MeasureDistanceScreenProps {
+  onMeasurementComplete?: (result: number) => void;
+}
+
+const MeasureDistanceScreen: React.FC<MeasureDistanceScreenProps> = ({ onMeasurementComplete }) => {
   const [image, setImage] = useState<string | null>(null);
   const [points, setPoints] = useState<{ x: number }[]>([{ x: 50 }, { x: 250 }]);
   const [scale, setScale] = useState<number | null>(null);
@@ -19,22 +23,22 @@ const MeasureDistanceScreen = () => {
   const [imageHeight, setImageHeight] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  // const captureImage = async () => {
-  //   try {
-  //     const capturedImage = await ImagePicker.openCamera({ mediaType: 'photo' });
-  //     const result = await ImagePicker.openCropper({
-  //       mediaType: 'photo',
-  //       path: capturedImage.path,
-  //       width: 428,
-  //       height: 269.9,
-  //     });
-  //     const imageUri = result.path.startsWith('file://') ? result.path : `file://${result.path}`;
-  //     setImage(imageUri);
-  //     setScale(null);
-  //   } catch (error) {
-  //     console.error('Image selection error:', error);
-  //   }
-  // };
+  const captureImage = async () => {
+    try {
+      const capturedImage = await ImagePicker.openCamera({ mediaType: 'photo' });
+      const result = await ImagePicker.openCropper({
+        mediaType: 'photo',
+        path: capturedImage.path,
+        width: 428,
+        height: 269.9,
+      });
+      const imageUri = result.path.startsWith('file://') ? result.path : `file://${result.path}`;
+      setImage(imageUri);
+      setScale(null);
+    } catch (error) {
+      console.error('Camera capture error:', error);
+    }
+  };
 
   const pickImage = async () => {
     try {
@@ -62,21 +66,22 @@ const MeasureDistanceScreen = () => {
     setScale(428/300);
     console.log('Image Width:', width);
     console.log('Image Height:', height);
-
   };
 
   useEffect(() => {
     console.log('Updated Image Height:', imageHeight);
-  }, [imageHeight]); // imageHeight 변경될 때 로그 확인
+  }, [imageHeight]);
 
   const calculateDistance = () => {
-
     if (!scale) return null;
     const pixelDistance = Math.abs(points[1].x - points[0].x);
     const distanceInMm = (pixelDistance * 0.178 * scale).toFixed(2);
     const result = Math.ceil(parseFloat(distanceInMm));
-    console.log(distanceInMm)
-
+    console.log(distanceInMm);
+    
+    if (onMeasurementComplete) {
+      onMeasurementComplete(result);
+    }
     return result;
   };
 
@@ -136,11 +141,22 @@ const MeasureDistanceScreen = () => {
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={pickImage}>
-          <Text style={styles.buttonText}>이미지 선택</Text>
+          <Text style={styles.buttonText}>갤러리</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={captureImage}>
+          <Text style={styles.buttonText}>카메라</Text>
         </TouchableOpacity>
 
         {image && (
-          <TouchableOpacity style={styles.button} onPress={() => Alert.alert(`거리: ${calculateDistance()} mm`)}>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => {
+              const result = calculateDistance();
+              if (result !== null) {
+                Alert.alert(`거리: ${result} mm`);
+              }
+            }}
+          >
             <Text style={styles.buttonText}>확인</Text>
           </TouchableOpacity>
         )}

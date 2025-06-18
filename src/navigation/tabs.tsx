@@ -1,14 +1,16 @@
 import React from 'react';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../screens/HomeScreen";
-import MyPageScreen from '../screens/my_page';
+import MyPageStack from './myPageStack';
 import MeasureDistanceScreen from "../screens/camera";
 import { BottomNavigation, Icon } from "react-native-paper";
 import { CommonActions } from '@react-navigation/native';
 import SnapPage from "../screens/snap_page";
-import CategoryScreen from "../screens/category";
+import CategoryStack from "./categoryStack";
 import CartScreen from "../screens/CartScreen";
 import ProductUploadScreen from "../screens/ProductUploadScreen";
+import { colors } from '../../colors';
+import SnapStack from './snapStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -17,8 +19,14 @@ const BottomTabs = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        },
       }}
-      initialRouteName="home-variant"
+      initialRouteName="Home"
       tabBar={({ navigation, state, descriptors, insets }) => (
         <BottomNavigation.Bar
           shifting={false}
@@ -46,9 +54,15 @@ const BottomTabs = () => {
           }}
           renderIcon={({ route, focused, color }) => {
             const { options } = descriptors[route.key];
+            const iconMap = {
+              'Home': 'home-variant',
+              'Category': 'text-box-search',
+              'Snap': 'heart',
+              'MyPage': 'account',
+            }
             const iconName = focused
-              ? route.name.toLowerCase() // 활성화된 탭 아이콘 이름
-              : `${route.name.toLowerCase()}-outline`; // 비활성화된 탭 아이콘 이름
+              ? iconMap[route.name] // 활성화된 탭 아이콘 이름
+              : `${iconMap[route.name]}-outline`; // 비활성화된 탭 아이콘 이름
 
             if (options.tabBarIcon) {
               return <Icon source={iconName} size={28} color={color}/>;
@@ -70,8 +84,8 @@ const BottomTabs = () => {
         />
       )}
     >
-      <Tab.Screen name="text-box-search"
-                  component={CategoryScreen}
+      <Tab.Screen name="Category"
+                  component={CategoryStack}
                   options={{
                     tabBarLabel: '카테고리',
                     tabBarIcon: ({ color, size }) => {
@@ -80,16 +94,7 @@ const BottomTabs = () => {
                   }}
       >
       </Tab.Screen>
-      <Tab.Screen name="camera"
-                  component={ProductUploadScreen}
-                  options={{
-                    tabBarLabel: '카메라',
-                    tabBarIcon: ({ color, size }) => {
-                      return <Icon source="camera-outline" size={size} color={color}/>;
-                    },
-                  }}
-      ></Tab.Screen>
-      <Tab.Screen name="home-variant"
+      <Tab.Screen name="Home"
                   component={HomeScreen}
                   options={{
                     tabBarLabel: '핸디 홈',
@@ -98,7 +103,7 @@ const BottomTabs = () => {
                     },
                   }}
       ></Tab.Screen>
-      <Tab.Screen name="heart"
+      <Tab.Screen name="Snap"
                   component={SnapPage}
                   options={{
                     tabBarLabel: '스냅',
@@ -107,8 +112,8 @@ const BottomTabs = () => {
                     },
                   }}
       ></Tab.Screen>
-      <Tab.Screen name="account"
-                  component={MyPageScreen}
+      <Tab.Screen name="MyPage"
+                  component={MyPageStack}
                   options={{
                     tabBarLabel: 'My',
                     tabBarIcon: ({ color, size }) => {

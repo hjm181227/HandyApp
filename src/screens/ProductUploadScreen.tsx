@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,34 +10,39 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { uploadProduct, Shape, ProductSize, ProductImage } from '../services/productService';
+import { uploadProduct, Shape, ProductSize, ProductImage, ProductUploadData } from '../services/productService';
+import { useUser } from '../context/UserContext';
 import ImageUploader from '../components/ImageUploader';
 import { Checkbox } from 'react-native-paper';
+import DetailImageUploader from '../components/DetailImageUploader';
 
 type ProductUploadScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProductUpload'>;
 
 const ProductUploadScreen = () => {
   const navigation = useNavigation<ProductUploadScreenNavigationProp>();
-  const [mainImage, setMainImage] = useState<ProductImage | null>(null);
+  const { token } = useUser();
+  const [mainImage, setMainImage] = useState<string | null>(null);
   const [productName, setProductName] = useState('');
   const [productDescription, setProductDescription] = useState('');
-  const [selectedShape, setSelectedShape] = useState<Shape>('round');
+  const [selectedShape, setSelectedShape] = useState<Shape>('ROUND');
   const [shapeChangable, setShapeChangable] = useState(false);
   const [selectedLength, setSelectedLength] = useState<ProductSize>('MEDIUM');
   const [lengthChangable, setLengthChangable] = useState(false);
-  const [isCustomizable, setIsCustomizable] = useState(false);
+  const [customAvailable, setCustomAvailable] = useState(false);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [price, setPrice] = useState('');
   const [productionTime, setProductionTime] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleMainImageUpload = (presignedUrl: string) => {
-    setMainImage({ imageUrl: presignedUrl });
+    const s3Url = presignedUrl.split('?')[0];
+    setMainImage(s3Url);
   };
 
   const handleProductImageUpload = (presignedUrl: string) => {
@@ -45,7 +50,8 @@ const ProductUploadScreen = () => {
       Alert.alert('알림', '최대 5장까지만 업로드 가능합니다.');
       return;
     }
-    setProductImages([...productImages, { imageUrl: presignedUrl, description: '' }]);
+    const s3Url = presignedUrl.split('?')[0];
+    setProductImages([...productImages, { imageUrl: s3Url, description: '' }]);
   };
 
   const updateImageDescription = (index: number, description: string) => {
@@ -93,30 +99,37 @@ const ProductUploadScreen = () => {
       return;
     }
 
-    setIsLoading(true);
+    if (!token) {
+      Alert.alert('오류', '로그인이 필요합니다.');
+      return;
+    }
 
     try {
-      const result = await uploadProduct({
-        mainImage,
+      setIsLoading(true);
+
+      const productData: ProductUploadData = {
         name: productName,
         description: productDescription,
         shape: selectedShape,
-        shapeChangable,
-        length: selectedLength,
-        lengthChangable,
-        isCustomizable,
+        shapeChangeable: shapeChangable,
+        size: selectedLength,
+        sizeChangeable: lengthChangable,
+        price: Number(price),
+        productionDays: Number(productionTime),
+        categoryIds: [1], // 임시로 1번 카테고리 사용
+        mainImageUrl: mainImage!,
         detailImages: productImages,
-        price: parseInt(price, 10),
-        productionTime: parseInt(productionTime, 10),
-      });
+        customAvailable: customAvailable,
+      };
 
-      if (result.success) {
-        Alert.alert('성공', '상품이 성공적으로 등록되었습니다.', [
-          { text: '확인', onPress: () => navigation.goBack() }
-        ]);
-      }
+      console.log('상품 등록 데이터:', productData);
+      console.log('토큰:', token);
+      await uploadProduct(productData, token);
+      Alert.alert('성공', '상품이 등록되었습니다.');
+      navigation.goBack();
     } catch (error) {
-      Alert.alert('오류', '상품 등록에 실패했습니다. 다시 시도해주세요.');
+      console.error('상품 등록 실패:', error);
+      Alert.alert('오류', error instanceof Error ? error.message : '상품 등록에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -199,8 +212,8 @@ const ProductUploadScreen = () => {
       <View style={styles.section}>
         <View style={styles.checkboxContainer}>
           <Checkbox
-            status={isCustomizable ? 'checked' : 'unchecked'}
-            onPress={() => setIsCustomizable(!isCustomizable)}
+            status={customAvailable ? 'checked' : 'unchecked'}
+            onPress={() => setCustomAvailable(!customAvailable)}
           />
           <Text style={styles.checkboxLabel}>커스텀 가능 여부</Text>
         </View>
@@ -208,34 +221,19 @@ const ProductUploadScreen = () => {
 
       <View style={styles.section}>
         <Text style={styles.label}>상품 상세이미지</Text>
-        <ScrollView horizontal style={styles.imageScroll}>
-          {productImages.map((image, index) => (
-            <View key={index} style={styles.imageBlock}>
-              <Image source={{ uri: image.imageUrl }} style={styles.productImage} />
-              <TextInput
-                style={styles.imageDescription}
-                value={image.description}
-                onChangeText={(text) => updateImageDescription(index, text)}
-                placeholder="이미지 설명"
-              />
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => removeProductImage(index)}
-              >
-                <Text style={styles.removeButtonText}>삭제</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-          {productImages.length < 5 && (
-            <View style={styles.addImageButton}>
-              <ImageUploader
-                onUploadSuccess={handleProductImageUpload}
-                label={productImages.length == 0 ? "상세 이미지 & 설명 추가" : ""}
-                iconName={productImages.length == 0 ? undefined : "plus"}
-              />
-            </View>
-          )}
-        </ScrollView>
+        <DetailImageUploader
+          onUploadSuccess={(images) => setProductImages(images)}
+          onUploadError={(error) => {
+            console.error('상세 이미지 업로드 실패:', error);
+            Alert.alert('알림', '상세 이미지 업로드에 실패했습니다.');
+          }}
+          onImageChanged={({ index, imageUrl }) => {
+            const newImages = [...productImages];
+            newImages[index] = { ...newImages[index], imageUrl };
+            setProductImages(newImages);
+          }}
+          maxImages={5}
+        />
       </View>
 
       <View style={styles.section}>
@@ -308,44 +306,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-  },
-  imageScroll: {
-    flexDirection: 'row',
-  },
-  imageBlock: {
-    marginRight: 16,
-    width: 200,
-    flexDirection: 'column',
-  },
-  productImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 8,
-  },
-  imageDescription: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 8,
-    marginTop: 8,
-  },
-  removeButton: {
-    backgroundColor: '#ff4444',
-    padding: 8,
-    borderRadius: 8,
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  removeButtonText: {
-    color: '#fff',
-  },
-  addImageButton: {
-    width: 200,
-    height: 200,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    overflow: 'hidden',
   },
   submitButton: {
     backgroundColor: '#007AFF',

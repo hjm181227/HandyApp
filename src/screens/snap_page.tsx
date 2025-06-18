@@ -2,28 +2,39 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { IconButton, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SnapStackParamList } from '../navigation/snapStack';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width / 3;
 const ITEM_HEIGHT = (ITEM_WIDTH * 5) / 4;
 
+type SnapPageNavigationProp = NativeStackNavigationProp<SnapStackParamList, 'SnapMain'>;
+
 const SnapPage = () => {
   const theme = useTheme();
+  const navigation = useNavigation<SnapPageNavigationProp>();
   const [activeTab, setActiveTab] = useState('discover');
   const [activeFilter, setActiveFilter] = useState('all');
 
-  const tabs = ['discover', 'ranking', 'following', 'fashionTalk'];
+  const tabs = [
+    'discover',
+    // 'ranking',
+    // 'following',
+    // 'fashionTalk'
+  ];
   const filters = ['all', 'new', 'popular', 'trending', 'following'];
 
   const renderHeader = () => (
     <View style={styles.header}>
       <Image
-        source={require('../../assets/images/logo.png')}
+        source={require('../../assets/images/logo-snap.png')}
         style={styles.logo}
         resizeMode="cover"
       />
       <View style={styles.headerButtons}>
-        <IconButton icon="bell-outline" size={24} onPress={() => {}} />
+        {/*<IconButton icon="bell-outline" size={24} onPress={() => {}} />*/}
         <IconButton icon="magnify" size={24} onPress={() => {}} />
         <IconButton icon="account-circle-outline" size={24} onPress={() => {}} />
       </View>
@@ -85,7 +96,11 @@ const SnapPage = () => {
   const renderImageGrid = () => (
     <View style={styles.imageGrid}>
       {[...Array(20)].map((_, index) => (
-        <View key={index} style={styles.imageContainer}>
+        <TouchableOpacity
+          key={index}
+          style={styles.imageContainer}
+          onPress={() => navigation.navigate('ModalStack', { screen: 'SnapExplore', params: { initialSnapId: index + 1 } })}
+        >
           <Image
             // source={{ uri: 'https://picsum.photos/400/500' }}
             source={require('../../assets/images/nail1.png')}
@@ -98,7 +113,7 @@ const SnapPage = () => {
             iconColor={'white'}
             onPress={() => {}}
           />
-        </View>
+        </TouchableOpacity>
       ))}
     </View>
   );

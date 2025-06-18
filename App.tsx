@@ -4,10 +4,11 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { UserProvider, useUser } from './src/context/UserContext';
 import { RootStackParamList } from './src/navigation/stack';
 import LoginScreen from './src/screens/LoginScreen';
+import SignupScreen from './src/screens/SignupScreen';
 import MainTabs from './src/navigation/tabs';
-import SettingScreen from './src/screens/setting';
-import SellerPage from './src/screens/seller_page';
-import CartScreen from './src/screens/CartScreen';
+import ModalStack from './src/navigation/modalStack';
+import PrivacyAgreementScreen from "./src/screens/PrivacyAgreementScreen";
+import PrivacyCollectionScreen from "./src/screens/PrivacyCollectionScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -22,13 +23,16 @@ const Navigation = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!token ? (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="SignUp" component={SignupScreen} />
+          <Stack.Screen name="PrivacyAgreement" component={PrivacyAgreementScreen} />
+          <Stack.Screen name="PrivacyCollection" component={PrivacyCollectionScreen} />
+        </>
       ) : (
         <>
           <Stack.Screen name="MainTabs" component={MainTabs} />
-          <Stack.Screen name="Setting" component={SettingScreen} />
-          <Stack.Screen name="SellerPage" component={SellerPage} />
-          <Stack.Screen name="Cart" component={CartScreen} />
+          <Stack.Screen name="ModalStack" component={ModalStack} />
         </>
       )}
     </Stack.Navigator>

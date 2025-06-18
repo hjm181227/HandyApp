@@ -1,9 +1,16 @@
 export type RootStackParamList = {
+  Category: undefined;
+  CategoryProductList: {
+    category: string;
+    subcategory: string;
+  };
+  ProductDetail: {
+    productId: string;
+  };
+  Cart: undefined;
   Main: undefined;
   Login: undefined;
   SignUp: undefined;
-  ProductList: undefined;
-  ProductDetail: { productId: number };
   ProductUpload: undefined;
   // ... existing code ...
 };

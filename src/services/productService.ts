@@ -1,8 +1,10 @@
 import { Platform } from 'react-native';
 import axios from 'axios';
 import { API_URL, API_ENDPOINTS, getDefaultHeaders } from '../config/api';
+import { useUser } from "../context/UserContext";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type Shape = 'round' | 'almond' | 'oval' | 'stiletto' | 'square' | 'coffin';
+export type Shape = 'ROUND' | 'ALMOND' | 'OVAL' | 'STILETTO' | 'SQUARE' | 'COFFIN';
 export type TPO = 'daily' | 'party' | 'wedding' | 'performance';
 export type ProductSize = 'SHORT' | 'MEDIUM' | 'LONG';
 
@@ -12,17 +14,18 @@ export interface ProductImage {
 }
 
 export interface ProductUploadData {
-  mainImage: ProductImage;
   name: string;
   description: string;
   shape: Shape;
-  shapeChangable: boolean;
-  length: ProductSize;
-  lengthChangable: boolean;
-  isCustomizable: boolean;
-  detailImages: ProductImage[];
+  shapeChangeable: boolean;
+  size: ProductSize;
+  sizeChangeable: boolean;
   price: number;
-  productionTime: number;
+  productionDays: number;
+  categoryIds: number[];
+  mainImageUrl: string;
+  detailImages: ProductImage[];
+  customAvailable: boolean;
 }
 
 export interface ProductData {
@@ -36,13 +39,6 @@ export interface ProductData {
   detailImages: ProductImage[];
   price: number;
   productionTime: number;
-}
-
-export interface DetailImage {
-  id: number;
-  imageUrl: string;
-  order: number;
-  description: string;
 }
 
 export interface Product {
@@ -67,83 +63,23 @@ export interface ProductResponse {
   number: number;
 }
 
-// 이미지 업로드 함수
-export const uploadImage = async (imageUri: string): Promise<string> => {
+// 상품 등록 함수
+export const uploadProduct = async (data: ProductUploadData, token: string): Promise<Product> => {
   try {
-    // 이미지 파일 생성
-    const formData = new FormData();
-
-    // 파일 이름 추출
-    const uriParts = imageUri.split('.');
-    const fileType = uriParts[uriParts.length - 1];
-
-    // 파일 이름 생성
-    const fileName = `product_${Date.now()}.${fileType}`;
-
-    // FormData에 파일 추가
-    formData.append('file', {
-      uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
-      type: `image/${fileType}`,
-      name: fileName,
-    } as any);
-
-    // API 호출
-    const response = await axios.post(`${API_URL}${API_ENDPOINTS.UPLOAD}`, formData, {
+    const response = await axios.post(`${API_URL}${API_ENDPOINTS.PRODUCTS}`, data, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
 
-    return response.data.imageUrl;
+    return response.data;
   } catch (error) {
-    console.error('이미지 업로드 실패:', error);
-    throw new Error('이미지 업로드에 실패했습니다.');
-  }
-};
-
-// 상품 등록 함수
-export const uploadProduct = async (productData: ProductUploadData): Promise<{ success: boolean; productId?: string }> => {
-  try {
-    // 대표 이미지 업로드
-    const mainImageUrl = await uploadImage(productData.mainImage.imageUrl);
-
-    // 상세 이미지 업로드
-    const productImagesWithUrls = await Promise.all(
-      productData.detailImages.map(({ imageUrl, description }) => {
-        return {
-          url: imageUrl,
-          description: description || '',
-        };
-      })
-    );
-
-    // 상품 데이터 준비
-    const productPayload = {
-      name: productData.name,
-      description: productData.description,
-      shape: productData.shape,
-      shapeChangable: productData.shapeChangable,
-      length: productData.length,
-      lengthChangable: productData.lengthChangable,
-      mainImage: mainImageUrl,
-      images: productImagesWithUrls,
-      price: productData.price,
-      productionTime: productData.productionTime,
-      isCustomizable: productData.isCustomizable,
-    };
-
-    // API 호출
-    const response = await axios.post(`${API_URL}${API_ENDPOINTS.PRODUCTS}`, productPayload, {
-      headers: getDefaultHeaders(),
-    });
-
-    return {
-      success: true,
-      productId: response.data.productId,
-    };
-  } catch (error) {
-    console.error('상품 등록 실패:', error);
-    throw new Error('상품 등록에 실패했습니다.');
+    console.error('Error uploading product:', error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || '상품 등록에 실패했습니다.');
+    }
+    throw error;
   }
 };
 

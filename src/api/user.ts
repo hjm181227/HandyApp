@@ -17,7 +17,7 @@ export const getCurrentUser = async (token: string): Promise<UserData> => {
   return response.data;
 };
 
-export const login = async (email: string, password: string): Promise<{ token: string; id: string; email: string; name: string }> => {
+export const login = async (email: string, password: string): Promise<{ token: string; id: number; email: string; name: string }> => {
   try {
     console.log('Login request:', { email, password });
     const response = await axiosInstance.post('/auth/login', {

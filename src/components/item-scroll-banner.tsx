@@ -9,6 +9,7 @@ export interface Item {
   price: number;
   imageUrl: string;
   description?: string;
+  rank?: number;
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -19,12 +20,16 @@ const ItemScrollBanner = ({ items, title }: { items: Item[], title: string }) =>
   const itemWidth = (screenWidth - 96) / 2; // 2 columns with padding
 
   const handleItemPress = (item: Item) => {
-    navigation.navigate('ProductDetail', {
-      productId: item.id.toString(),
-      title: item.name,
-      price: item.price,
-      image: item.imageUrl,
-      description: item.description || '상품 설명이 없습니다.',
+    navigation.navigate('ModalStack', {
+      screen: 'ProductDetail',
+      params: {
+        productId: item.id.toString(),
+        title: item.name,
+        price: item.price,
+        image: item.imageUrl,
+        description: item.description || '상품 설명이 없습니다.',
+        rank: item.rank,
+      }
     });
   };
 

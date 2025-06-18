@@ -69,17 +69,17 @@ const SellerPage = () => {
           ),
         }}
       />
-      <Drawer.Screen
-        name="EventManagement"
-        component={EventManagementScreen}
-        options={{
-          title: '이벤트/할인 관리',
-          drawerLabel: '이벤트/할인 관리',
-          drawerIcon: ({ color, size }) => (
-            <IconButton icon="tag-multiple" size={size} iconColor={color} />
-          ),
-        }}
-      />
+      {/*<Drawer.Screen*/}
+      {/*  name="EventManagement"*/}
+      {/*  component={EventManagementScreen}*/}
+      {/*  options={{*/}
+      {/*    title: '이벤트/할인 관리',*/}
+      {/*    drawerLabel: '이벤트/할인 관리',*/}
+      {/*    drawerIcon: ({ color, size }) => (*/}
+      {/*      <IconButton icon="tag-multiple" size={size} iconColor={color} />*/}
+      {/*    ),*/}
+      {/*  }}*/}
+      {/*/>*/}
       <Drawer.Screen
         name="Dashboard"
         component={DashboardScreen}

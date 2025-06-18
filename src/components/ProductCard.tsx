@@ -1,77 +1,118 @@
 import React from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native';
-import { Product } from '../services/productService';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, Card } from 'react-native-paper';
+import HandyColors from '../../colors';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/stack';
 
-interface ProductCardProps {
-  product: Product;
-  onPress: () => void;
-}
+type ProductCardNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const ProductCard = ({ product, onPress }: ProductCardProps) => {
+type ProductCardProps = {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  rank?: number;
+};
+
+const ProductCard = ({ id, name, price, imageUrl, rank }: ProductCardProps) => {
+  const navigation = useNavigation<ProductCardNavigationProp>();
+
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image 
-        source={{ uri: product.mainImageUrl }} 
-        style={styles.image}
-        resizeMode="cover"
-      />
-      <View style={styles.content}>
-        <Text style={styles.name} numberOfLines={1}>{product.name}</Text>
-        <Text style={styles.price}>{product.price.toLocaleString()}원</Text>
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            {product.shapeChangable ? '모양 변경 가능' : '모양 고정'}
+    <TouchableOpacity
+      style={styles.productCard}
+      onPress={() => navigation.navigate('ModalStack', {
+        screen: 'ProductDetail',
+        params: {
+          productId: id,
+          title: name,
+          price: price,
+          image: imageUrl,
+          description: '상품 설명이 없습니다.',
+          rank: rank
+        }
+      })}
+    >
+      <Card style={styles.card}>
+        {rank !== undefined && (
+          <View style={styles.rankContainer}>
+            <View style={[
+              styles.rankBadge,
+              rank <= 3 && styles.topRankBadge
+            ]}>
+              <Text style={[
+                styles.rankText,
+                rank <= 3 && styles.topRankText
+              ]}>
+                {rank}
+              </Text>
+            </View>
+          </View>
+        )}
+        <Card.Cover source={{ uri: imageUrl }} style={styles.productImage} />
+        <Card.Content style={styles.cardContent}>
+          <Text style={styles.productName} numberOfLines={2}>
+            {name}
           </Text>
-          <Text style={styles.infoText}>
-            {product.lengthChangable ? '길이 변경 가능' : '길이 고정'}
+          <Text style={styles.productPrice}>
+            {price.toLocaleString()}원
           </Text>
-        </View>
-      </View>
+        </Card.Content>
+      </Card>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  productCard: {
+    width: '33.33%',
+    padding: 4,
   },
-  image: {
-    width: '100%',
-    height: 200,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+  card: {
+    margin: 4,
+    elevation: 2,
   },
-  content: {
-    padding: 16,
+  rankContainer: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    zIndex: 1,
   },
-  name: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
+  rankBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  price: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#007AFF',
-    marginBottom: 8,
+  topRankBadge: {
+    backgroundColor: HandyColors.primary40,
   },
-  infoContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  infoText: {
+  rankText: {
+    color: 'white',
     fontSize: 14,
-    color: '#666',
+    fontWeight: '600',
+  },
+  topRankText: {
+    color: 'white',
+  },
+  productImage: {
+    height: 120,
+  },
+  cardContent: {
+    padding: 8,
+  },
+  productName: {
+    fontSize: 14,
+    marginBottom: 4,
+    color: '#333',
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: HandyColors.primary40,
   },
 });
 

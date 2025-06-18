@@ -4,10 +4,10 @@ import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { colors } from '../../colors';
 import { Icon } from 'react-native-paper';
 import { ActivityIndicator } from 'react-native-paper';
-import { RootStackParamList } from '../navigation/stack';
+import { ModalStackParamList } from '../navigation/modalStack';
 import { getProductDetail, ProductDetail } from '../api/product';
 
-type ProductDetailScreenRouteProp = RouteProp<RootStackParamList, 'ProductDetail'>;
+type ProductDetailScreenRouteProp = RouteProp<ModalStackParamList, 'ProductDetail'>;
 
 type TabType = 'info' | 'recommend' | 'review' | 'qna';
 
@@ -165,6 +165,11 @@ const ProductDetailScreen = () => {
 
         {/* 상품 기본 정보 영역 */}
         <View style={styles.basicInfoContainer}>
+          {route.params.rank && (
+            <View style={styles.rankBadge}>
+              <Text style={styles.rankText}>{route.params.rank}</Text>
+            </View>
+          )}
           <Text style={styles.title}>{product.name}</Text>
           <Text style={styles.price}>{product.price.toLocaleString()}원</Text>
         </View>
@@ -353,6 +358,23 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#c62828',
     textAlign: 'center',
+  },
+  rankBadge: {
+    position: 'absolute',
+    top: -20,
+    left: 16,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  rankText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 

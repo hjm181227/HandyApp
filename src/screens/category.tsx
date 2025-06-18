@@ -4,6 +4,10 @@ import { Searchbar, IconButton, Avatar, Text, useTheme } from 'react-native-pape
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HandyColors from '../../colors';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { CategoryStackParamList } from '../navigation/categoryStack';
+
+type CategoryScreenNavigationProp = NativeStackNavigationProp<CategoryStackParamList, 'CategoryMain'>;
 
 type CategoryOption = {
   name: string;
@@ -42,7 +46,7 @@ const categoryOptions: CategoryOption[] = [
 ];
 
 const CategoryScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<CategoryScreenNavigationProp>();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('category');
   const [selectedOption, setSelectedOption] = useState(categoryOptions[0]);
@@ -61,7 +65,9 @@ const CategoryScreen = () => {
         <IconButton
           icon="shopping-outline"
           size={24}
-          onPress={() => navigation.navigate('Cart')}
+          onPress={() => navigation.navigate('ModalStack', {
+            screen: 'Cart'
+          })}
           style={styles.cartButton}
         />
       </View>
@@ -74,14 +80,14 @@ const CategoryScreen = () => {
             카테고리
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'service' && styles.selectedTab]}
-          onPress={() => setSelectedTab('service')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'service' && styles.selectedTabText]}>
-            서비스
-          </Text>
-        </TouchableOpacity>
+        {/*<TouchableOpacity*/}
+        {/*  style={[styles.tab, selectedTab === 'service' && styles.selectedTab]}*/}
+        {/*  onPress={() => setSelectedTab('service')}*/}
+        {/*>*/}
+        {/*  <Text style={[styles.tabText, selectedTab === 'service' && styles.selectedTabText]}>*/}
+        {/*    서비스*/}
+        {/*  </Text>*/}
+        {/*</TouchableOpacity>*/}
       </View>
     </View>
   );
@@ -112,14 +118,21 @@ const CategoryScreen = () => {
     <ScrollView style={styles.categoryGrid}>
       <View style={styles.gridContainer}>
         {selectedOption.subcategories.map((category) => (
-          <View key={category} style={styles.categoryItem}>
+          <TouchableOpacity
+            key={category}
+            style={styles.categoryItem}
+            onPress={() => navigation.navigate('CategoryProductList', {
+              category: selectedOption.name,
+              subcategory: category
+            })}
+          >
             <Avatar.Text
               size={40}
               label={category.substring(0, 2)}
               style={styles.avatar}
             />
             <Text style={styles.categoryText}>{category}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </ScrollView>

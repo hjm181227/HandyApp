@@ -6,15 +6,24 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ScrollView,
 } from 'react-native';
+import { Checkbox } from 'react-native-paper';
 import axios from 'axios';
 
 const SignupScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [isAgreed, setIsAgreed] = useState(false);
+  const [isCollectionAgreed, setIsCollectionAgreed] = useState(false);
 
   const handleSignup = async () => {
+    if (!isAgreed || !isCollectionAgreed) {
+      Alert.alert('알림', '모든 약관에 동의해주세요.');
+      return;
+    }
+
     try {
       await axios.post('http://localhost:8080/auth/signup', {
         email,
@@ -34,7 +43,7 @@ const SignupScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>회원가입</Text>
       <TextInput
         style={styles.input}
@@ -57,7 +66,46 @@ const SignupScreen = ({ navigation }) => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <TouchableOpacity style={styles.button} onPress={handleSignup}>
+      
+      <View style={styles.agreementContainer}>
+        <Checkbox
+          status={isAgreed ? 'checked' : 'unchecked'}
+          onPress={() => setIsAgreed(!isAgreed)}
+        />
+        <View style={styles.agreementTextContainer}>
+          <Text style={styles.agreementText}>
+            개인정보처리방침에 동의합니다.
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('PrivacyAgreement')}
+          >
+            <Text style={styles.agreementLink}>자세히 보기</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.agreementContainer}>
+        <Checkbox
+          status={isCollectionAgreed ? 'checked' : 'unchecked'}
+          onPress={() => setIsCollectionAgreed(!isCollectionAgreed)}
+        />
+        <View style={styles.agreementTextContainer}>
+          <Text style={styles.agreementText}>
+            개인정보수집동의서에 동의합니다.
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('PrivacyCollection')}
+          >
+            <Text style={styles.agreementLink}>자세히 보기</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <TouchableOpacity 
+        style={[styles.button, (!isAgreed || !isCollectionAgreed) && styles.buttonDisabled]} 
+        onPress={handleSignup}
+        disabled={!isAgreed || !isCollectionAgreed}
+      >
         <Text style={styles.buttonText}>회원가입</Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -66,14 +114,13 @@ const SignupScreen = ({ navigation }) => {
       >
         <Text style={styles.loginText}>로그인하기</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     padding: 20,
     backgroundColor: '#fff',
   },
@@ -82,6 +129,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
+    marginTop: 20,
   },
   input: {
     height: 50,
@@ -92,6 +140,27 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
+  agreementContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  agreementTextContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  agreementText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  agreementLink: {
+    fontSize: 14,
+    color: '#007AFF',
+    marginLeft: 8,
+    textDecorationLine: 'underline',
+  },
   button: {
     backgroundColor: '#007AFF',
     height: 50,
@@ -99,6 +168,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: '#ccc',
   },
   buttonText: {
     color: '#fff',
@@ -108,6 +180,7 @@ const styles = StyleSheet.create({
   loginButton: {
     marginTop: 15,
     alignItems: 'center',
+    marginBottom: 30,
   },
   loginText: {
     color: '#007AFF',

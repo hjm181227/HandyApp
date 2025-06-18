@@ -1,15 +1,22 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, List, Avatar, Button } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MyPageStackParamList } from '../navigation/myPageStack';
+
+type SettingScreenNavigationProp = StackNavigationProp<MyPageStackParamList, 'Setting'>;
 
 const SettingScreen = () => {
+  const navigation = useNavigation<SettingScreenNavigationProp>();
+
   const menuItems = [
     { title: '회원정보 변경', icon: 'account-edit', onPress: () => {} },
     { title: '비밀번호 변경', icon: 'lock', onPress: () => {} },
-    { title: '나의 맞춤 정보', icon: 'account-heart', onPress: () => {} },
-    { title: '배송지 관리', icon: 'map-marker', onPress: () => {} },
-    { title: '환불 계좌 관리', icon: 'bank', onPress: () => {} },
-    { title: '알림 설정', icon: 'bell', onPress: () => {} },
+    // { title: '나의 맞춤 정보', icon: 'account-heart', onPress: () => navigation.navigate('NailMeasurement') },
+    // { title: '배송지 관리', icon: 'map-marker', onPress: () => {} },
+    // { title: '환불 계좌 관리', icon: 'bank', onPress: () => {} },
+    // { title: '알림 설정', icon: 'bell', onPress: () => {} },
   ];
 
   return (
@@ -90,4 +97,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SettingScreen; 
+export default SettingScreen;

@@ -1,15 +1,18 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import BottomTabs from './tabs';
-import ProductDetailScreen from '../screens/ProductDetailScreen';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Icon } from 'react-native-paper';
 import { colors } from '../../colors';
 import SettingScreen from '../screens/setting';
-import CartScreen from '../screens/CartScreen';
-import SellerPage from '../screens/seller_page';
+import CategoryProductListScreen from '../screens/CategoryProductListScreen';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import TermsScreen from '../screens/TermsScreen';
+import PrivacyAgreementScreen from '../screens/PrivacyAgreementScreen';
+import PrivacyCollectionScreen from '../screens/PrivacyCollectionScreen';
+import SnapStack from './snapStack';
 
 export type RootStackParamList = {
   MainTabs: {
@@ -18,43 +21,26 @@ export type RootStackParamList = {
       screen?: string;
     };
   };
-  ProductDetail: {
-    productId: string;
-    title: string;
-    price: number;
-    image: string;
-    description: string;
+  ModalStack: {
+    screen?: string;
+    params?: any;
   };
+  Login: undefined;
+  SignUp: undefined;
   Setting: undefined;
-  Cart: undefined;
-  SellerPage: undefined;
   ProductUpload: undefined;
+  CategoryProductList: {
+    category: string;
+    subcategory: string;
+  };
+  PrivacyPolicy: undefined;
+  Terms: undefined;
+  PrivacyAgreement: undefined;
+  PrivacyCollection: undefined;
+  SnapStack: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
-
-type ProductDetailScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ProductDetail'>;
-
-const ProductDetailHeaderRight = () => {
-  const navigation = useNavigation<ProductDetailScreenNavigationProp>();
-
-  return (
-    <View style={styles.headerRight}>
-      <TouchableOpacity style={styles.headerButton}>
-        <Icon source="home-variant-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.headerButton}
-        onPress={() => navigation.navigate('Cart')}
-      >
-        <Icon source="shopping-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.headerButton}>
-        <Icon source="magnify" size={24} color={colors.text} />
-      </TouchableOpacity>
-    </View>
-  );
-};
 
 const RootStack = () => {
   return (
@@ -74,37 +60,47 @@ const RootStack = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="ProductDetail"
-        component={ProductDetailScreen}
+        name="PrivacyAgreement"
+        component={PrivacyAgreementScreen}
         options={{
-          title: '상품 상세',
-          headerRight: () => <ProductDetailHeaderRight />,
+          title: '개인정보처리동의서',
         }}
       />
       <Stack.Screen
-        name="Setting"
-        component={SettingScreen}
+        name="PrivacyCollection"
+        component={PrivacyCollectionScreen}
         options={{
-          title: '설정',
-        }}
-      />
-      <Stack.Screen
-        name="Cart"
-        component={CartScreen}
-        options={{
-          title: '장바구니',
-        }}
-      />
-      <Stack.Screen
-        name="SellerPage"
-        component={SellerPage}
-        options={{
-          headerShown: false,
-          presentation: 'modal',
-          animation: 'slide_from_right',
+          title: '개인정보수집동의서',
         }}
       />
     </Stack.Navigator>
+  );
+};
+
+export default RootStack;
+
+type ProductDetailScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ProductDetail'>;
+
+const ProductDetailHeaderRight = () => {
+  const navigation = useNavigation<ProductDetailScreenNavigationProp>();
+
+  return (
+    <View style={styles.headerRight}>
+      <TouchableOpacity style={styles.headerButton}>
+        <Icon source="home-variant-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={() => navigation.navigate('ModalStack', {
+          screen: 'Cart'
+        })}
+      >
+        <Icon source="shopping-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.headerButton}>
+        <Icon source="magnify" size={24} color={colors.text} />
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -117,5 +113,3 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
 });
-
-export default RootStack;
