@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { IconButton, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SnapStackParamList } from '../navigation/snapStack';
+import { useUser } from "../context/UserContext";
+import axiosInstance from '../api/axios';
+import { Snap, SnapListResponse } from '../types/snap';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width / 3;
@@ -14,15 +17,42 @@ type SnapPageNavigationProp = NativeStackNavigationProp<SnapStackParamList, 'Sna
 
 const SnapPage = () => {
   const theme = useTheme();
+  const { userData } = useUser();
   const navigation = useNavigation<SnapPageNavigationProp>();
   const [activeTab, setActiveTab] = useState('discover');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [snaps, setSnaps] = useState<Snap[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSnaps = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get('/snap/list');
+        const responseData: SnapListResponse = response.data;
+        setSnaps(responseData.data);
+      } catch (error) {
+        console.error('Error fetching snaps:', error);
+        // API 실패 시 빈 배열로 설정
+        setSnaps([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSnaps();
+  }, []);
+
+  const handleProfilePress = () => {
+    navigation.getParent()?.navigate('ModalStack', {
+      screen: 'SnapProfile',
+      params: { userId: userData?.id || 1 },
+    });
+  };
 
   const tabs = [
-    'discover',
-    // 'ranking',
-    // 'following',
-    // 'fashionTalk'
+    { id: 'discover', label: '발견' },
+    { id: 'following', label: '팔로잉' },
   ];
   const filters = ['all', 'new', 'popular', 'trending', 'following'];
 
@@ -36,7 +66,11 @@ const SnapPage = () => {
       <View style={styles.headerButtons}>
         {/*<IconButton icon="bell-outline" size={24} onPress={() => {}} />*/}
         <IconButton icon="magnify" size={24} onPress={() => {}} />
-        <IconButton icon="account-circle-outline" size={24} onPress={() => {}} />
+        <IconButton
+          icon="account-circle-outline"
+          size={24}
+          onPress={handleProfilePress}
+        />
       </View>
     </View>
   );
@@ -45,20 +79,20 @@ const SnapPage = () => {
     <View style={styles.tabsContainer}>
       {tabs.map((tab) => (
         <TouchableOpacity
-          key={tab}
+          key={tab.id}
           style={[
             styles.tab,
-            activeTab === tab && styles.activeTab,
+            activeTab === tab.id && styles.activeTab,
           ]}
-          onPress={() => setActiveTab(tab)}
+          onPress={() => setActiveTab(tab.id)}
         >
           <Text
             style={[
               styles.tabText,
-              activeTab === tab && styles.activeTabText,
+              activeTab === tab.id && styles.activeTabText,
             ]}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab.label}
           </Text>
         </TouchableOpacity>
       ))}
@@ -93,17 +127,22 @@ const SnapPage = () => {
     </ScrollView>
   );
 
-  const renderImageGrid = () => (
+  const renderSnapGrid = () => (
     <View style={styles.imageGrid}>
-      {[...Array(20)].map((_, index) => (
+      {snaps.map((snap) => (
         <TouchableOpacity
-          key={index}
+          key={snap.id}
           style={styles.imageContainer}
-          onPress={() => navigation.navigate('ModalStack', { screen: 'SnapExplore', params: { initialSnapId: index + 1 } })}
+          onPress={() => {
+            // @ts-ignore - ModalStack으로 이동하기 위해 임시로 타입 무시
+            navigation.getParent()?.navigate('ModalStack', {
+              screen: 'SnapExplore',
+              params: { initialSnapId: snap.id }
+            });
+          }}
         >
           <Image
-            // source={{ uri: 'https://picsum.photos/400/500' }}
-            source={require('../../assets/images/nail1.png')}
+            source={{ uri: snap.images[0] }}
             style={styles.image}
           />
           <IconButton
@@ -124,7 +163,7 @@ const SnapPage = () => {
       {renderTabs()}
       {/*{renderFilters()}*/}
       <ScrollView style={styles.content}>
-        {renderImageGrid()}
+        {renderSnapGrid()}
       </ScrollView>
     </SafeAreaView>
   );

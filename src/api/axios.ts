@@ -66,7 +66,7 @@ axiosInstance.interceptors.response.use(
       await AsyncStorage.removeItem('userData');
 
       // 토큰 만료 이벤트 발생
-      authEventEmitter.emit('tokenExpired');
+      authEventEmitter.emit('tokeFnExpired');
     }
     if (error.response) {
       // 서버가 응답을 반환한 경우

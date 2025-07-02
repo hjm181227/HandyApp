@@ -4,15 +4,10 @@ import BottomTabs from './tabs';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Icon } from 'react-native-paper';
 import { colors } from '../../colors';
-import SettingScreen from '../screens/setting';
-import CategoryProductListScreen from '../screens/CategoryProductListScreen';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
-import TermsScreen from '../screens/TermsScreen';
 import PrivacyAgreementScreen from '../screens/PrivacyAgreementScreen';
 import PrivacyCollectionScreen from '../screens/PrivacyCollectionScreen';
-import SnapStack from './snapStack';
 
 export type RootStackParamList = {
   MainTabs: {

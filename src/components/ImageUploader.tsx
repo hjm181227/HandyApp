@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, Text, DimensionValue } from 'react-native';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { View, StyleSheet, TouchableOpacity, Image, Text, DimensionValue, StyleProp, ViewStyle, ImageStyle } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { getPresignedUrl } from '../api/upload';
@@ -8,23 +8,41 @@ interface ImageUploaderProps {
   onUploadSuccess?: (imageUrl: string) => void;
   onUploadError?: (error: Error) => void;
   onImageChanged?: (imageUrl: string) => void;
+  onImageRemove?: () => void;
+  triggerPick?: boolean;
+  onPickTriggered?: () => void;
   width?: DimensionValue;
   height?: DimensionValue;
   label?: string;
   iconName?: string;
   initialValue?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  imageStyle?: StyleProp<ImageStyle>;
+  iconComponent?: React.ReactNode;
+  isRemoving?: boolean;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({
+export interface ImageUploaderRef {
+  pickImage: () => Promise<void>;
+}
+
+const ImageUploader = forwardRef<ImageUploaderRef, ImageUploaderProps>(({
   onUploadSuccess,
   onUploadError,
   onImageChanged,
+  onImageRemove,
+  triggerPick = false,
+  onPickTriggered,
   width = 200,
   height = 200,
   label = '이미지 선택',
   iconName = 'image',
   initialValue,
-}) => {
+  containerStyle,
+  imageStyle,
+  iconComponent,
+  isRemoving = false,
+}, ref) => {
   const [imageUrl, setImageUrl] = useState<string | null>(initialValue || null);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +51,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       setImageUrl(initialValue);
     }
   }, [initialValue]);
+
+  useEffect(() => {
+    if (triggerPick) {
+      pickImage();
+      onPickTriggered?.();
+    }
+  }, [triggerPick]);
 
   const pickImage = async () => {
     try {
@@ -65,6 +90,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    pickImage,
+  }));
+
   const uploadImage = async (uri: string) => {
     try {
       setLoading(true);
@@ -91,30 +120,37 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   };
 
+  const handleRemoveImage = () => {
+    if (onImageRemove) {
+      onImageRemove();
+    } else {
+      setImageUrl(null);
+      onUploadSuccess?.('');
+    }
+  };
+
   return (
-    <View style={[styles.container, { width, height }]}>
+    <View style={[styles.container, { width, height }, containerStyle]}>
       {imageUrl ? (
         <View style={styles.imageContainer}>
-          <Image source={{ uri: imageUrl }} style={[styles.image, { width, height }]} />
+          <Image source={{ uri: imageUrl }} style={[styles.image, { width, height }, imageStyle]} />
           <IconButton
             icon="close"
             size={20}
             style={styles.removeButton}
-            onPress={() => {
-              setImageUrl(null);
-              onUploadSuccess?.('');
-            }}
+            onPress={handleRemoveImage}
+            disabled={isRemoving}
           />
         </View>
       ) : (
         <TouchableOpacity style={[styles.uploadButton, { width, height }]} onPress={pickImage}>
-          <IconButton icon={iconName} size={32} />
+          {iconComponent ? iconComponent : <IconButton icon={iconName} size={32} />}
           <Text style={styles.uploadText}>{label}</Text>
         </TouchableOpacity>
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

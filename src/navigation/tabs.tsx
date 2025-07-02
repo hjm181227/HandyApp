@@ -5,7 +5,7 @@ import MyPageStack from './myPageStack';
 import MeasureDistanceScreen from "../screens/camera";
 import { BottomNavigation, Icon } from "react-native-paper";
 import { CommonActions } from '@react-navigation/native';
-import SnapPage from "../screens/snap_page";
+import SnapPage from "../screens/SnapPage";
 import CategoryStack from "./categoryStack";
 import CartScreen from "../screens/CartScreen";
 import ProductUploadScreen from "../screens/ProductUploadScreen";

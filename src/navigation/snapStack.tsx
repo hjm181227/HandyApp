@@ -1,5 +1,5 @@
 import React from 'react';
-import SnapPage from '../screens/snap_page';
+import SnapPage from '../screens/SnapPage';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import SnapExploreScreen from "../../screens/SnapExploreScreen";
 

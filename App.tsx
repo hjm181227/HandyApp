@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { Provider as PaperProvider } from 'react-native-paper';
 import { UserProvider, useUser } from './src/context/UserContext';
 import { RootStackParamList } from './src/navigation/stack';
 import LoginScreen from './src/screens/LoginScreen';
@@ -41,11 +42,13 @@ const Navigation = () => {
 
 const App = () => {
   return (
-    <NavigationContainer ref={navigationRef}>
-      <UserProvider>
-        <Navigation />
-      </UserProvider>
-    </NavigationContainer>
+    <PaperProvider>
+      <NavigationContainer ref={navigationRef}>
+        <UserProvider>
+          <Navigation />
+        </UserProvider>
+      </NavigationContainer>
+    </PaperProvider>
   );
 };
 

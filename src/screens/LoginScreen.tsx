@@ -6,7 +6,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/stack';
 import HandyColors from "../../colors";
 import { useUser } from '../context/UserContext';
-import { login } from '../api/user';
+import { getCurrentUser, login } from '../api/user';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -32,16 +32,9 @@ const LoginScreen = () => {
         throw new Error('로그인에 실패했습니다.');
       }
 
-      // 사용자 데이터 저장
-      const userData = {
-        id,
-        email: userEmail,
-        name,
-      };
-
-      // 토큰과 사용자 데이터를 AsyncStorage에 저장
+      // 토큰을 AsyncStorage에 저장
       await setToken(token);
-      await setUserData(userData);
+
     } catch (error) {
       console.error('Login error:', error);
       InteractionManager.runAfterInteractions(() => {

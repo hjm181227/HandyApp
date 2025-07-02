@@ -7,8 +7,9 @@ import SellerPage from '../screens/seller_page';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import TermsScreen from '../screens/TermsScreen';
 import { colors } from '../../colors';
-import SnapPage from "../screens/snap_page";
+import SnapPage from "../screens/SnapPage";
 import SnapExploreScreen from "../../screens/SnapExploreScreen";
+import SnapProfileScreen from "../../screens/SnapProfileScreen";
 
 export type ModalStackParamList = {
   ProductDetail: {
@@ -24,6 +25,13 @@ export type ModalStackParamList = {
   SellerPage: undefined;
   PrivacyPolicy: undefined;
   Terms: undefined;
+  SnapExplore: {
+    initialSnapId: number;
+    userId?: number;
+  };
+  SnapProfile: {
+    userId: number;
+  };
 };
 
 const Stack = createStackNavigator<ModalStackParamList>();
@@ -79,6 +87,13 @@ const ModalStack = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="SnapExplore" component={SnapExploreScreen} />
+      <Stack.Screen
+        name="SnapProfile"
+        component={SnapProfileScreen}
+        options={{
+          headerShown: false
+        }}
+      />
     </Stack.Navigator>
   );
 };

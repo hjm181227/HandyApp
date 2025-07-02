@@ -1,14 +1,22 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, List, Avatar, Button } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Modal, Alert } from 'react-native';
+import { Text, List, Avatar, Button, Portal, Dialog } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MyPageStackParamList } from '../navigation/myPageStack';
+import ProfileImageUploader from '../components/ProfileImageUploader';
+import { getCurrentUser, updateProfileImage } from '../api/user';
+import { useUser } from '../context/UserContext';
 
 type SettingScreenNavigationProp = StackNavigationProp<MyPageStackParamList, 'Setting'>;
 
 const SettingScreen = () => {
   const navigation = useNavigation<SettingScreenNavigationProp>();
+  const { userData, setUserData, token } = useUser();
+  const [profileImageModalVisible, setProfileImageModalVisible] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [currentProfileImage, setCurrentProfileImage] = useState<string | undefined>(userData?.profileImageUrl);
 
   const menuItems = [
     { title: '회원정보 변경', icon: 'account-edit', onPress: () => {} },
@@ -19,20 +27,83 @@ const SettingScreen = () => {
     // { title: '알림 설정', icon: 'bell', onPress: () => {} },
   ];
 
+  const handleProfileImageChange = (imageUrl: string) => {
+    setSelectedImageUrl(imageUrl);
+  };
+
+  const handleSaveProfileImage = async () => {
+    if (!selectedImageUrl) {
+      Alert.alert('알림', '선택된 이미지가 없습니다.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await updateProfileImage(selectedImageUrl);
+      setCurrentProfileImage(selectedImageUrl);
+
+      // UserContext의 userData도 업데이트
+      if (userData) {
+        await setUserData({
+          ...userData,
+          profileImageUrl: selectedImageUrl,
+        });
+      }
+
+      setProfileImageModalVisible(false);
+      Alert.alert('성공', '프로필 이미지가 변경되었습니다.');
+    } catch (error) {
+      console.error('Profile image update error:', error);
+      Alert.alert('오류', '프로필 이미지 변경 중 오류가 발생했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleProfileImageRemoved = async () => {
+    try {
+      if (!token) {
+        Alert.alert('오류', '사용자 인증 정보가 없습니다.');
+        return;
+      }
+      const updatedUserData = await getCurrentUser(token);
+      setCurrentProfileImage(updatedUserData.profileImageUrl);
+
+      // UserContext의 userData도 업데이트
+      if (updatedUserData) {
+        await setUserData({
+          ...updatedUserData
+        });
+      }
+
+      setProfileImageModalVisible(false);
+      Alert.alert('성공', '프로필 이미지가 제거되었습니다.');
+    } catch (error) {
+      console.error('Profile image removal error:', error);
+      Alert.alert('오류', '프로필 이미지 제거 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleCancelProfileImage = () => {
+    setSelectedImageUrl('');
+    setProfileImageModalVisible(false);
+  };
+
   return (
     <View style={styles.container}>
       {/* Profile Section */}
       <View style={styles.profileSection}>
         <Avatar.Image
           size={100}
-          source={{ uri: 'https://via.placeholder.com/100' }}
+          source={{ uri: currentProfileImage }}
+          style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.2)', backgroundColor: '#e0e0e0' }}
         />
-        <Text style={styles.userName}>홍길동</Text>
-        <Text style={styles.userId}>@user123</Text>
+        <Text style={styles.userName}>{userData?.name || '홍길동'}</Text>
+        <Text style={styles.userId}>@{userData?.email?.split('@')[0] || 'user123'}</Text>
         <View style={styles.profileButtons}>
           <Button
             mode="outlined"
-            onPress={() => {}}
+            onPress={() => setProfileImageModalVisible(true)}
             style={styles.profileButton}
           >
             프로필 이미지 변경
@@ -59,6 +130,50 @@ const SettingScreen = () => {
           />
         ))}
       </View>
+
+      {/* Profile Image Change Modal */}
+      <Portal>
+        <Modal
+          visible={profileImageModalVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>프로필 이미지 변경</Text>
+              <Button onPress={handleCancelProfileImage}>취소</Button>
+            </View>
+
+            <View style={styles.modalContent}>
+              <ProfileImageUploader
+                size={150}
+                initialValue={currentProfileImage}
+                onImageChanged={handleProfileImageChange}
+                onUploadSuccess={(imageUrl) => {
+                  setSelectedImageUrl(imageUrl);
+                }}
+                onUploadError={(error) => {
+                  Alert.alert('오류', error.message);
+                }}
+                onImageRemoved={handleProfileImageRemoved}
+                showPickButton={true}
+              />
+
+              <View style={styles.modalButtons}>
+                <Button
+                  mode="contained"
+                  onPress={handleSaveProfileImage}
+                  loading={isSaving}
+                  disabled={!selectedImageUrl || isSaving}
+                  style={styles.saveButton}
+                >
+                  저장
+                </Button>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </Portal>
     </View>
   );
 };
@@ -94,6 +209,35 @@ const styles = StyleSheet.create({
   },
   menuList: {
     flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalButtons: {
+    marginTop: 30,
+    width: '100%',
+  },
+  saveButton: {
+    marginTop: 10,
   },
 });
 

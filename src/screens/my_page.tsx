@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image, Alert, InteractionManager } from 'react-native';
-import { Text, List, IconButton, Avatar } from 'react-native-paper';
+import { Text, List, IconButton, Avatar, ActivityIndicator } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MyPageStackParamList } from '../navigation/myPageStack';
@@ -12,6 +12,25 @@ type MyPageScreenNavigationProp = StackNavigationProp<MyPageStackParamList, 'MyP
 const MyPageScreen = () => {
   const navigation = useNavigation<MyPageScreenNavigationProp>();
   const { userData, logout } = useUser();
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
+
+  console.log('userData:', userData);
+  console.log('profileImageUrl:', userData?.profileImageUrl);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [userData?.profileImageUrl]);
+
+  // AVIF 형식인지 확인하는 함수
+  const isAVIFImage = (url: string) => {
+    return url.includes('avif') || url.includes('image/avif');
+  };
+
+  // 이미지 URL이 유효하고 AVIF가 아닌지 확인
+  const isValidImageUrl = (url: string) => {
+    return url && !isAVIFImage(url);
+  };
 
   const handleLogout = () => {
     InteractionManager.runAfterInteractions(() => {
@@ -83,11 +102,43 @@ const MyPageScreen = () => {
 
       {/* User Info Section */}
       <View style={styles.userInfoSection}>
-        <Avatar.Icon
-          size={80}
-          icon={"account"}
-        />
-        <Text style={styles.userName}>{userData?.name || '사용자'}</Text>
+        {userData?.profileImageUrl && isValidImageUrl(userData.profileImageUrl) && !imageError ? (
+          <View style={{ position: 'relative' }}>
+            <Avatar.Image
+              source={{ uri: userData.profileImageUrl }}
+              size={100}
+              style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.2)', backgroundColor: '#e0e0e0' }}
+              onError={(error) => {
+                console.error('Image loading error:', error.nativeEvent);
+                console.log('Failed URL:', userData.profileImageUrl);
+                setImageError(true);
+              }}
+              onLoadStart={() => {
+                console.log('Image loading started:', userData.profileImageUrl);
+                setImageLoading(true);
+              }}
+              onLoad={() => {
+                console.log('Image loaded successfully:', userData.profileImageUrl);
+                setImageLoading(false);
+              }}
+              onLoadEnd={() => {
+                setImageLoading(false);
+              }}
+            />
+            {imageLoading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="small" color={HandyColors.primary90} />
+              </View>
+            )}
+          </View>
+        ) : (
+          <Avatar.Icon
+            size={100}
+            icon="account"
+            style={{ backgroundColor: '#e0e0e0' }}
+          />
+        )}
+        <Text style={styles.userName}>{userData?.name}</Text>
       </View>
 
       {/* Menu List */}
@@ -132,6 +183,16 @@ const styles = StyleSheet.create({
   },
   menuList: {
     flex: 1,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

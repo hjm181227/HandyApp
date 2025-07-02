@@ -13,10 +13,10 @@ export interface ProductDetail {
 
 export const getProductDetail = async (productId: string): Promise<ProductDetail> => {
   try {
-    const response = await axiosInstance.get(`/api/products/${productId}`);
+    const response = await axiosInstance.get(`/products/${productId}`);
     return response.data;
   } catch (error) {
     console.error('상품 상세 정보 조회 실패:', error);
     throw error;
   }
-}; 
+};
