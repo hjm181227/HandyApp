@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text, Card, useTheme, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HandyColors from '../../colors';
@@ -67,7 +67,6 @@ const mockProducts: Product[] = [
 const CategoryProductListScreen = () => {
   const navigation = useNavigation<CategoryProductListScreenNavigationProp>();
   const route = useRoute();
-  const theme = useTheme();
   const { category, subcategory } = route.params as { category: string; subcategory: string };
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);

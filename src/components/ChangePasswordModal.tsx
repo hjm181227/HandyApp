@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Modal, Portal, Text, TextInput, Button, HelperText } from 'react-native-paper';
 
 interface ChangePasswordModalProps {
@@ -110,4 +110,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChangePasswordModal; 
+export default ChangePasswordModal;

@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, FAB, IconButton } from 'react-native-paper';
+import { StyleSheet } from 'react-native';
+import { IconButton } from 'react-native-paper';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -10,7 +10,6 @@ import HandyColors from "../../colors";
 // Import screens
 import ProductListScreen from './seller/ProductListScreen';
 import OrderManagementScreen from './seller/OrderManagementScreen';
-import EventManagementScreen from './seller/EventManagementScreen';
 import DashboardScreen from './seller/DashboardScreen';
 import ProductInquiryScreen from './seller/ProductInquiryScreen';
 import ReviewManagementScreen from './seller/ReviewManagementScreen';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, Alert, InteractionManager } from 'react-native';
+import { View, StyleSheet, Alert, InteractionManager } from 'react-native';
 import { Text, List, IconButton, Avatar, ActivityIndicator } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';

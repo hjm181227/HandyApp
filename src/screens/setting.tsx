@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Modal, Alert } from 'react-native';
-import { Text, List, Avatar, Button, Portal, Dialog } from 'react-native-paper';
+import { Text, List, Avatar, Button, Portal } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MyPageStackParamList } from '../navigation/myPageStack';
