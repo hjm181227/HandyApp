@@ -5,6 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ModalStackParamList } from '../src/navigation/modalStack';
 import axiosInstance from '../src/api/axios';
 import { Snap, SnapListResponse, Pagination } from '../src/types/snap';
+import { useUser } from '../src/context/UserContext';
 
 type Props = NativeStackScreenProps<ModalStackParamList, 'SnapProfile'>;
 
@@ -22,12 +23,16 @@ interface UserInfo {
 
 const SnapProfileScreen: React.FC<Props> = ({ route, navigation }) => {
   const theme = useTheme();
+  const { userData } = useUser();
   const { userId } = route.params;
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [posts, setPosts] = useState<Snap[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
+
+  // 현재 사용자와 프로필 주인의 ID 비교
+  const isOwnProfile = userData?.id === userId;
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -106,9 +111,11 @@ const SnapProfileScreen: React.FC<Props> = ({ route, navigation }) => {
             <Text style={styles.statLabel}>팔로잉</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.followButton}>
-          <Text style={styles.followButtonText}>팔로우</Text>
-        </TouchableOpacity>
+        {!isOwnProfile && (
+          <TouchableOpacity style={styles.followButton}>
+            <Text style={styles.followButtonText}>팔로우</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };

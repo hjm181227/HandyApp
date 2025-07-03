@@ -17,6 +17,18 @@ export const getCurrentUser = async (token: string): Promise<UserData> => {
   return response.data;
 };
 
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string,
+  token: string
+): Promise<void> => {
+  await axiosInstance.put(
+    '/users/me/password',
+    { currentPassword, newPassword },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+};
+
 export const updateProfileImage = async (imageUrl: string): Promise<{ success: boolean }> => {
   console.log(imageUrl);
   try {
