@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ImageURISource } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ImageURISource, Alert } from 'react-native';
 import { Icon } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ModalStackParamList } from '../src/navigation/modalStack';
 import axiosInstance from '../src/api/axios';
 import CommentModal from './CommentModal';
+import { useUser } from '../src/context/UserContext';
+import ReportSnapModal from '../src/components/ReportSnapModal';
+import { ReportReason } from '../src/api/report';
 
 type NavigationProp = NativeStackNavigationProp<ModalStackParamList>;
 
@@ -14,7 +17,7 @@ interface SnapPostCardProps {
   profileImage: string | any;
   username: string;
   contentImage: string | any;
-  userId: string;
+  userId: number;
   content?: string;
   isLiked?: boolean;
   likeCount?: number | string;
@@ -43,10 +46,14 @@ const SnapPostCard: React.FC<SnapPostCardProps> = ({
   onComment,
 }) => {
   const navigation = useNavigation<NavigationProp>();
+  const { userData } = useUser();
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(typeof initialLikeCount === 'number' ? initialLikeCount : Number(initialLikeCount) || 0);
   const [showCommentModal, setShowCommentModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [isMounted, setIsMounted] = useState(true);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -102,8 +109,29 @@ const SnapPostCard: React.FC<SnapPostCardProps> = ({
     onFollow?.();
   }, [isMounted, onFollow]);
 
+  const handleReportSnap = async (reason: ReportReason, content: string) => {
+    setReportError(null);
+    setReportLoading(true);
+    try {
+      await axiosInstance.post('/reports', {
+        targetId: snapId,
+        targetType: 'SNAP',
+        reason,
+        content,
+      });
+      setShowReportModal(false);
+      Alert.alert('신고 완료', '게시글이 신고되었습니다.');
+    } catch (error: any) {
+      console.error('Error reporting snap:', error);
+      setReportError(error?.response?.data?.message || '신고를 처리할 수 없습니다.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   const handleReport = useCallback(() => {
     if (!isMounted) return;
+    setShowReportModal(true);
     onReport?.();
   }, [isMounted, onReport]);
 
@@ -119,17 +147,55 @@ const SnapPostCard: React.FC<SnapPostCardProps> = ({
     return image;
   };
 
+  const isOwnPost = userData?.id === userId;
+
   return (
-    <View style={styles.container}>
-      {/* Profile Section */}
-      <View style={styles.profileSection}>
-        <TouchableOpacity
-          style={styles.profileInfo}
-          onPress={handleProfilePress}
-        >
+    <>
+      <View style={styles.container}>
+        {/* Profile Section */}
+        <View style={styles.profileSection}>
+          <TouchableOpacity
+            style={styles.profileInfo}
+            onPress={handleProfilePress}
+          >
+            <Image
+              source={getImageSource(profileImage)}
+              style={styles.profileImage}
+              onLoadStart={() => {
+                if (!isMounted) return;
+              }}
+              onLoadEnd={() => {
+                if (!isMounted) return;
+              }}
+            />
+            <Text style={styles.username}>{username}</Text>
+          </TouchableOpacity>
+          <View style={styles.actionButtons}>
+            {!isOwnPost && (
+              <TouchableOpacity
+                onPress={handleFollow}
+                style={styles.followButton}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.followButtonText}>팔로우</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={handleReport}
+              style={styles.reportButton}
+              activeOpacity={0.7}
+            >
+              <Icon source="flag-outline" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Content Section */}
+        <View style={styles.contentSection}>
           <Image
-            source={getImageSource(profileImage)}
-            style={styles.profileImage}
+            source={getImageSource(contentImage)}
+            style={styles.contentImage}
+            resizeMode="cover"
             onLoadStart={() => {
               if (!isMounted) return;
             }}
@@ -137,126 +203,103 @@ const SnapPostCard: React.FC<SnapPostCardProps> = ({
               if (!isMounted) return;
             }}
           />
-          <Text style={styles.username}>{username}</Text>
-        </TouchableOpacity>
-        <View style={styles.actionButtons}>
+        </View>
+
+        {/* Interaction Section */}
+        <View style={styles.interactionSection}>
+          <View style={styles.interactionButtons}>
+            <TouchableOpacity
+              onPress={handleLike}
+              style={styles.interactionButton}
+              activeOpacity={0.7}
+            >
+              <Icon
+                source={isLiked ? "heart" : "heart-outline"}
+                size={24}
+                color={isLiked ? "#FF6B6B" : "#333"}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleComment}
+              style={styles.interactionButton}
+              activeOpacity={0.7}
+            >
+              <Icon source="comment-outline" size={24} color="#333" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleShare}
+              style={styles.interactionButton}
+              activeOpacity={0.7}
+            >
+              <Icon source="share-outline" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Like Count Section */}
+        {likeCount > 0 && (
+          <View style={styles.likeCountSection}>
+            <Text style={styles.likeCountText}>좋아요 {likeCount}개</Text>
+          </View>
+        )}
+
+        {/* Content Section */}
+        {content && (
+          <View style={styles.contentTextSection}>
+            <Text style={styles.contentText} numberOfLines={3}>{content}
+            </Text>
+          </View>
+        )}
+
+        {/* Comment Preview Section */}
+        <View style={styles.commentPreviewSection}>
+          {commentCount > 0 ? (
+            <>
+              <TouchableOpacity
+                style={styles.viewMoreComments}
+                onPress={handleComment}
+              >
+                <Text style={styles.viewMoreText}>댓글 더 보기</Text>
+              </TouchableOpacity>
+              <View style={styles.firstComment}>
+                <Text style={styles.commentText}>
+                  <Text style={styles.commentUsername}>사용자1</Text> 정말 예쁘네요!
+                </Text>
+              </View>
+            </>
+          ) : null}
           <TouchableOpacity
-            onPress={handleFollow}
-            style={styles.followButton}
-            activeOpacity={0.7}
+            style={styles.commentInputPreview}
+            onPress={handleComment}
           >
-            <Text style={styles.followButtonText}>팔로우</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleReport}
-            style={styles.reportButton}
-            activeOpacity={0.7}
-          >
-            <Icon source="flag-outline" size={20} color="#666" />
+            <Image
+              source={require('../assets/images/nail1.png')}
+              style={styles.userProfileImage}
+            />
+            <Text style={styles.commentPlaceholder}>
+              {commentCount > 0 ? '댓글을 남겨주세요.' : '첫 댓글을 남겨주세요.'}
+            </Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Content Section */}
-      <View style={styles.contentSection}>
-        <Image
-          source={getImageSource(contentImage)}
-          style={styles.contentImage}
-          resizeMode="cover"
-          onLoadStart={() => {
-            if (!isMounted) return;
-          }}
-          onLoadEnd={() => {
-            if (!isMounted) return;
-          }}
+        {/* Comment Modal */}
+        <CommentModal
+          visible={showCommentModal}
+          snapId={snapId}
+          commentCount={commentCount}
+          onClose={handleCloseCommentModal}
         />
       </View>
 
-      {/* Interaction Section */}
-      <View style={styles.interactionSection}>
-        <View style={styles.interactionButtons}>
-          <TouchableOpacity
-            onPress={handleLike}
-            style={styles.interactionButton}
-            activeOpacity={0.7}
-          >
-            <Icon
-              source={isLiked ? "heart" : "heart-outline"}
-              size={24}
-              color={isLiked ? "#FF6B6B" : "#333"}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleComment}
-            style={styles.interactionButton}
-            activeOpacity={0.7}
-          >
-            <Icon source="comment-outline" size={24} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleShare}
-            style={styles.interactionButton}
-            activeOpacity={0.7}
-          >
-            <Icon source="share-outline" size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Like Count Section */}
-      {likeCount > 0 && (
-        <View style={styles.likeCountSection}>
-          <Text style={styles.likeCountText}>좋아요 {likeCount}개</Text>
-        </View>
-      )}
-
-      {/* Content Section */}
-      {content && (
-        <View style={styles.contentTextSection}>
-          <Text style={styles.contentText} numberOfLines={3}>{content}
-          </Text>
-        </View>
-      )}
-
-      {/* Comment Preview Section */}
-      <View style={styles.commentPreviewSection}>
-        {commentCount > 0 ? (
-          <>
-            <TouchableOpacity
-              style={styles.viewMoreComments}
-              onPress={handleComment}
-            >
-              <Text style={styles.viewMoreText}>댓글 더 보기</Text>
-            </TouchableOpacity>
-            <View style={styles.firstComment}>
-              <Text style={styles.commentText}>
-                <Text style={styles.commentUsername}>사용자1</Text> 정말 예쁘네요!
-              </Text>
-            </View>
-          </>
-        ) : null}
-        <TouchableOpacity
-          style={styles.commentInputPreview}
-          onPress={handleComment}
-        >
-          <Image
-            source={require('../assets/images/nail1.png')}
-            style={styles.userProfileImage}
-          />
-          <Text style={styles.commentPlaceholder}>
-            {commentCount > 0 ? '댓글을 남겨주세요.' : '첫 댓글을 남겨주세요.'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Comment Modal */}
-      <CommentModal
-        visible={showCommentModal}
-        snapId={snapId}
-        commentCount={commentCount}
-        onClose={handleCloseCommentModal}
+      {/* Report Modal */}
+      <ReportSnapModal
+        visible={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleReportSnap}
+        loading={reportLoading}
+        error={reportError}
       />
-    </View>
+    </>
   );
 };
 

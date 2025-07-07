@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { IconButton, useTheme } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ModalStackParamList } from '../src/navigation/modalStack';
 import axiosInstance from '../src/api/axios';
 import { Snap, SnapListResponse, Pagination } from '../src/types/snap';
 import { useUser } from '../src/context/UserContext';
+import { useIsFocused } from '@react-navigation/native';
+import SnapPostCard from '../components/SnapPostCard';
+import ReportSnapModal from '../src/components/ReportSnapModal';
+import { reportSnap, ReportReason } from '../src/api/report';
 
 type Props = NativeStackScreenProps<ModalStackParamList, 'SnapProfile'>;
 
@@ -25,52 +29,87 @@ const SnapProfileScreen: React.FC<Props> = ({ route, navigation }) => {
   const theme = useTheme();
   const { userData } = useUser();
   const { userId } = route.params;
+  const isFocused = useIsFocused();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [posts, setPosts] = useState<Snap[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportTargetId, setReportTargetId] = useState<number | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   // 현재 사용자와 프로필 주인의 ID 비교
   const isOwnProfile = userData?.id === userId;
 
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const userResponse = await axiosInstance.get(`/users/${userId}/snap-profile`);
+      setUserInfo(userResponse.data);
+      const postsResponse = await axiosInstance.get(`/snap/list?userId=${userId}`);
+      const responseData: SnapListResponse = postsResponse.data;
+      setPosts(responseData.data);
+      setPagination(responseData.pagination);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setError('데이터를 가져오는 중 오류가 발생했습니다.');
+      setPagination({
+        page: 0,
+        size: 10,
+        totalElements: 30,
+        totalPages: 3,
+        hasNext: false,
+        hasPrevious: false,
+        isFirst: true,
+        isLast: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    if (isFocused) {
+      fetchPosts();
+    }
+  }, [userId, isFocused]);
 
-        // 사용자 정보 가져오기 (실제 API 엔드포인트로 수정 필요)
-        const userResponse = await axiosInstance.get(`/users/${userId}/snap-profile`);
-        setUserInfo(userResponse.data);
+  const handleToggleLike = async (snapId: number, liked: boolean) => {
+    try {
+      await axiosInstance.post(`/snap/${snapId}/likes`);
+      setPosts((prev) =>
+        prev.map((snap) =>
+          snap.id === snapId
+            ? {
+                ...snap,
+                liked: !liked,
+                likeCount: snap.liked ? snap.likeCount - 1 : snap.likeCount + 1,
+              }
+            : snap
+        )
+      );
+    } catch (e) {
+      // 에러 처리 (필요시 alert 등)
+    }
+  };
 
-        // 사용자의 스냅 목록 가져오기
-        const postsResponse = await axiosInstance.get(`/snap/list?userId=${userId}`);
-        const responseData: SnapListResponse = postsResponse.data;
-        setPosts(responseData.data);
-        setPagination(responseData.pagination);
-
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        setError('데이터를 가져오는 중 오류가 발생했습니다.');
-
-        setPagination({
-          page: 0,
-          size: 10,
-          totalElements: 30,
-          totalPages: 3,
-          hasNext: false,
-          hasPrevious: false,
-          isFirst: true,
-          isLast: true,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [userId]);
+  const handleReportSnap = async (reason: ReportReason, content: string) => {
+    if (!reportTargetId) return;
+    setReportError(null);
+    setReportLoading(true);
+    try {
+      await reportSnap(reportTargetId, reason, content);
+      setReportModalVisible(false);
+      Alert.alert('신고가 접수되었습니다.');
+    } catch (error: any) {
+      setReportError(error?.response?.data?.message || '신고에 실패했습니다.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -138,14 +177,31 @@ const SnapProfileScreen: React.FC<Props> = ({ route, navigation }) => {
             style={styles.image}
           />
           <IconButton
-            icon="heart-outline"
+            icon={snap.liked ? 'heart' : 'heart-outline'}
             size={24}
             style={styles.likeButton}
-            iconColor={'white'}
-            onPress={() => {}}
+            iconColor={snap.liked ? 'red' : 'white'}
+            onPress={() => handleToggleLike(snap.id, snap.liked)}
+          />
+          <IconButton
+            icon="alert-circle-outline"
+            size={24}
+            style={[styles.likeButton, { right: 32 }]}
+            iconColor={'#ff6b6b'}
+            onPress={() => {
+              setReportTargetId(snap.id);
+              setReportModalVisible(true);
+            }}
           />
         </TouchableOpacity>
       ))}
+      <ReportSnapModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
+        onSubmit={handleReportSnap}
+        loading={reportLoading}
+        error={reportError}
+      />
     </View>
   );
 

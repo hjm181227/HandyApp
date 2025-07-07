@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { IconButton, Icon } from 'react-native-paper';
 import axiosInstance from '../src/api/axios';
+import CommentComponent from './CommentComponent';
+import { extractData } from '../src/utils/api';
 
 interface Comment {
   id: number;
@@ -19,6 +21,7 @@ interface Comment {
   userName: string;
   userProfileImage: string | null;
   createdAt: string;
+  replies?: Comment[]; // 답글 배열 추가
 }
 
 interface CommentModalProps {
@@ -47,27 +50,11 @@ const CommentModal: React.FC<CommentModalProps> = ({
   const fetchComments = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get(`/snap/${snapId}/comments`);
-      setComments(response.data);
+      const response = await axiosInstance.get(`/comments/snap/${snapId}`);
+      const comments = extractData<Comment[]>(response);
+      setComments(comments);
     } catch (error) {
       console.error('Error fetching comments:', error);
-      // Mock data for now
-      setComments([
-        {
-          id: 1,
-          content: '정말 예쁘네요!',
-          userName: '사용자1',
-          userProfileImage: null,
-          createdAt: '2025-01-01T12:00:00',
-        },
-        {
-          id: 2,
-          content: '어디서 하셨나요?',
-          userName: '사용자2',
-          userProfileImage: null,
-          createdAt: '2025-01-01T12:30:00',
-        },
-      ]);
     } finally {
       setLoading(false);
     }
@@ -77,7 +64,7 @@ const CommentModal: React.FC<CommentModalProps> = ({
     if (!newComment.trim()) return;
 
     try {
-      const response = await axiosInstance.post(`/snap/${snapId}/comments`, {
+      const response = await axiosInstance.post(`/comments/snap/${snapId}`, {
         content: newComment,
       });
       setComments(prev => [response.data, ...prev]);
@@ -88,7 +75,7 @@ const CommentModal: React.FC<CommentModalProps> = ({
     }
   };
 
-  const handleReportComment = (commentId: number) => {
+  const handleReportComment = async (commentId: number) => {
     Alert.alert(
       '댓글 신고',
       '이 댓글을 신고하시겠습니까?',
@@ -111,31 +98,6 @@ const CommentModal: React.FC<CommentModalProps> = ({
     );
   };
 
-  const renderComment = ({ item }: { item: Comment }) => (
-    <View style={styles.commentItem}>
-      <View style={styles.commentHeader}>
-        <View style={styles.commentUserInfo}>
-          <Image
-            source={
-              item.userProfileImage
-                ? { uri: item.userProfileImage }
-                : require('../assets/images/nail1.png')
-            }
-            style={styles.commentUserImage}
-          />
-          <Text style={styles.commentUserName}>{item.userName}</Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => handleReportComment(item.id)}
-          style={styles.reportButton}
-        >
-          <Icon source="dots-vertical" size={16} color="#666" />
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.commentContent}>{item.content}</Text>
-    </View>
-  );
-
   return (
     <Modal
       visible={visible}
@@ -153,7 +115,18 @@ const CommentModal: React.FC<CommentModalProps> = ({
         {/* Comments List */}
         <FlatList
           data={comments}
-          renderItem={renderComment}
+          renderItem={({ item }) => (
+            <CommentComponent
+              id={item.id}
+              snapId={snapId}
+              content={item.content}
+              userName={item.userName}
+              userProfileImage={item.userProfileImage}
+              createdAt={item.createdAt}
+              onReport={handleReportComment}
+              onReplyAdded={fetchComments}
+            />
+          )}
           keyExtractor={(item) => String(item.id)}
           style={styles.commentsList}
           showsVerticalScrollIndicator={false}
@@ -289,4 +262,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CommentModal; 
+export default CommentModal;

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { IconButton, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SnapStackParamList } from '../navigation/snapStack';
 import { useUser } from "../context/UserContext";
@@ -19,29 +19,31 @@ const SnapPage = () => {
   const theme = useTheme();
   const { userData } = useUser();
   const navigation = useNavigation<SnapPageNavigationProp>();
-  const [activeTab, setActiveTab] = useState('discover');
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [snaps, setSnaps] = useState<Snap[]>([]);
-  const [loading, setLoading] = useState(true);
+  const isFocused = useIsFocused();
+  const [ activeTab, setActiveTab ] = useState('discover');
+  const [ activeFilter, setActiveFilter ] = useState('all');
+  const [ snaps, setSnaps ] = useState<Snap[]>([]);
+  const [ loading, setLoading ] = useState(true);
+
+  const fetchSnaps = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get('/snap/list');
+      const responseData: SnapListResponse = response.data;
+      setSnaps(responseData.data);
+    } catch (error) {
+      console.error('Error fetching snaps:', error);
+      setSnaps([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSnaps = async () => {
-      try {
-        setLoading(true);
-        const response = await axiosInstance.get('/snap/list');
-        const responseData: SnapListResponse = response.data;
-        setSnaps(responseData.data);
-      } catch (error) {
-        console.error('Error fetching snaps:', error);
-        // API 실패 시 빈 배열로 설정
-        setSnaps([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSnaps();
-  }, []);
+    if (isFocused) {
+      fetchSnaps();
+    }
+  }, [isFocused]);
 
   const handleProfilePress = () => {
     navigation.getParent()?.navigate('ModalStack', {
@@ -50,11 +52,31 @@ const SnapPage = () => {
     });
   };
 
+  const handleToggleLike = async (snapId: number, liked: boolean) => {
+    try {
+      await axiosInstance.post(`/snap/${snapId}/likes`);
+
+      setSnaps((prev) =>
+        prev.map((snap) =>
+          snap.id === snapId
+            ? {
+              ...snap,
+              liked: !liked,
+              likeCount: snap.liked ? snap.likeCount - 1 : snap.likeCount + 1,
+            }
+            : snap
+        )
+      );
+    } catch (e) {
+      // 에러 처리 (필요시 alert 등)
+    }
+  };
+
   const tabs = [
     { id: 'discover', label: '발견' },
     { id: 'following', label: '팔로잉' },
   ];
-  const filters = ['all', 'new', 'popular', 'trending', 'following'];
+  const filters = [ 'all', 'new', 'popular', 'trending', 'following' ];
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -65,7 +87,8 @@ const SnapPage = () => {
       />
       <View style={styles.headerButtons}>
         {/*<IconButton icon="bell-outline" size={24} onPress={() => {}} />*/}
-        <IconButton icon="magnify" size={24} onPress={() => {}} />
+        <IconButton icon="magnify" size={24} onPress={() => {
+        }}/>
         <IconButton
           icon="account-circle-outline"
           size={24}
@@ -146,11 +169,11 @@ const SnapPage = () => {
             style={styles.image}
           />
           <IconButton
-            icon="heart-outline"
+            icon={snap.liked ? 'heart' : 'heart-outline'}
             size={24}
             style={styles.likeButton}
-            iconColor={'white'}
-            onPress={() => {}}
+            iconColor={snap.liked ? 'red' : 'white'}
+            onPress={() => handleToggleLike(snap.id, snap.liked)}
           />
         </TouchableOpacity>
       ))}

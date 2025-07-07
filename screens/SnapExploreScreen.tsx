@@ -5,48 +5,41 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ModalStackParamList } from '../src/navigation/modalStack';
 import axiosInstance from '../src/api/axios';
 import { Snap, SnapListResponse, Pagination } from '../src/types/snap';
+import { useIsFocused } from '@react-navigation/native';
+import { useUser } from '../src/context/UserContext';
 
 type Props = NativeStackScreenProps<ModalStackParamList, 'SnapExplore'>;
 
 const SnapExploreScreen: React.FC<Props> = ({ route }) => {
   const { initialSnapId, userId } = route.params;
+  const isFocused = useIsFocused();
   const [snaps, setSnaps] = useState<Snap[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
+  const { userData } = useUser();
+
+  const fetchSnaps = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const endpoint = userId ? `/snap/list?userId=${userId}` : '/snap/list';
+      const response = await axiosInstance.get(endpoint);
+      const responseData: SnapListResponse = response.data;
+      setSnaps(responseData.data);
+      setPagination(responseData.pagination);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching snaps:', error);
+      setError('데이터를 가져오는 중 오류가 발생했습니다.');
+    }
+  };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchSnaps = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // userId가 있으면 해당 사용자의 게시물만 가져오기
-        const endpoint = userId ? `/snap/list?userId=${userId}` : '/snap/list';
-        const response = await axiosInstance.get(endpoint);
-        const responseData: SnapListResponse = response.data;
-
-        if (isMounted) {
-          setSnaps(responseData.data);
-          setPagination(responseData.pagination);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error fetching snaps:', error);
-        if (isMounted) {
-          setError('데이터를 가져오는 중 오류가 발생했습니다.');
-        }
-      }
-    };
-
-    fetchSnaps();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [initialSnapId, userId]);
+    if (isFocused) {
+      fetchSnaps();
+    }
+  }, [initialSnapId, userId, isFocused]);
 
   const handleFollow = useCallback((snapId: number) => {
     console.log('Follow snap:', snapId);
@@ -74,7 +67,7 @@ const SnapExploreScreen: React.FC<Props> = ({ route }) => {
       profileImage={item.userProfileImage || require('../assets/images/nail1.png')}
       username={item.userName}
       contentImage={item.images[0]}
-      userId={String(item.userId)}
+      userId={item.userId}
       content={item.content}
       isLiked={item.liked}
       likeCount={item.likeCount}
