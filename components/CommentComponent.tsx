@@ -90,15 +90,15 @@ const CommentComponent: React.FC<CommentProps> = ({
 
   return (
     <>
-      <View style={styles.commentItem}>
-        <View style={styles.commentHeader}>
-          <View style={styles.commentUserInfo}>
-            <Image
-              source={userProfileImage ? { uri: userProfileImage } : require('../assets/images/nail1.png')}
-              style={styles.commentUserImage}
-            />
-            <Text style={styles.commentUserName}>{userName}</Text>
-          </View>
+    <View style={styles.commentItem}>
+      <View style={styles.commentHeader}>
+        <View style={styles.commentUserInfo}>
+          <Image
+            source={userProfileImage ? { uri: userProfileImage } : require('../assets/images/nail1.png')}
+            style={styles.commentUserImage}
+          />
+          <Text style={styles.commentUserName}>{userName}</Text>
+        </View>
           <View style={styles.actionButtons}>
             <TouchableOpacity
               onPress={() => setShowReplyModal(true)}
@@ -106,15 +106,15 @@ const CommentComponent: React.FC<CommentProps> = ({
             >
               <Text style={styles.replyButtonText}>답글</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+        <TouchableOpacity
               onPress={() => setShowReportModal(true)}
-              style={styles.reportButton}
-            >
-              <Icon source="dots-vertical" size={16} color="#666" />
-            </TouchableOpacity>
+          style={styles.reportButton}
+        >
+          <Icon source="dots-vertical" size={16} color="#666" />
+        </TouchableOpacity>
           </View>
-        </View>
-        <Text style={styles.commentContent}>{content}</Text>
+      </View>
+      <Text style={styles.commentContent}>{content}</Text>
         
         {/* 답글 목록 */}
         {replies && replies.length > 0 && (
@@ -248,7 +248,7 @@ const CommentComponent: React.FC<CommentProps> = ({
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+    </View>
       </Modal>
     </>
   );

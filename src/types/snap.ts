@@ -28,3 +28,4 @@ export interface SnapListResponse {
   data: Snap[];
   pagination: Pagination;
 }
+ 

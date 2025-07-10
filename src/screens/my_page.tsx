@@ -71,7 +71,7 @@ const MyPageScreen = () => {
     { title: '고객센터', icon: 'headphones', onPress: () => navigation.navigate('Inquiry') },
     { title: '1:1 문의 내역', icon: 'message-text', onPress: () => navigation.navigate('MyInquiry') },
     // { title: '상품 문의 내역', icon: 'comment-question', onPress: () => {} },
-    { title: '공지사항', icon: 'bell', onPress: () => {} },
+    { title: '공지사항', icon: 'bell', onPress: () => navigation.navigate('NoticeStack') },
     { title: '로그아웃', icon: 'logout', onPress: handleLogout, titleStyle: { color: HandyColors.primary90 } }
   ];
 

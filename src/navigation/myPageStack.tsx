@@ -5,6 +5,7 @@ import NailMeasurementScreen from '../screens/NailMeasurementScreen';
 import NailCameraScreen from '../screens/NailCameraScreen';
 import InquiryScreen from '../screens/InquiryScreen';
 import MyInquiryScreen from '../screens/MyInquiryScreen';
+import NoticeStack from './noticeStack';
 
 export type MyPageStackParamList = {
   MyPageMain: undefined;
@@ -12,6 +13,7 @@ export type MyPageStackParamList = {
   NailCamera: undefined;
   Inquiry: undefined;
   MyInquiry: undefined;
+  NoticeStack: undefined;
   ModalStack: {
     screen?: string;
     params?: any;
@@ -32,8 +34,9 @@ const MyPageStack = () => {
       <Stack.Screen name="NailCamera" component={NailCameraScreen} />
       <Stack.Screen name="Inquiry" component={InquiryScreen} />
       <Stack.Screen name="MyInquiry" component={MyInquiryScreen} />
+      <Stack.Screen name="NoticeStack" component={NoticeStack} />
     </Stack.Navigator>
   );
 };
 
-export default MyPageStack; 
+export default MyPageStack;

@@ -7,7 +7,6 @@ import SellerPage from '../screens/seller_page';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import TermsScreen from '../screens/TermsScreen';
 import { colors } from '../../colors';
-import SnapPage from "../screens/SnapPage";
 import SnapExploreScreen from "../../screens/SnapExploreScreen";
 import SnapProfileScreen from "../../screens/SnapProfileScreen";
 

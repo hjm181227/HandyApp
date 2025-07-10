@@ -43,11 +43,11 @@ const Navigation = () => {
 const App = () => {
   return (
     <PaperProvider>
-      <NavigationContainer ref={navigationRef}>
-        <UserProvider>
-          <Navigation />
-        </UserProvider>
-      </NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
+      <UserProvider>
+        <Navigation />
+      </UserProvider>
+    </NavigationContainer>
     </PaperProvider>
   );
 };
