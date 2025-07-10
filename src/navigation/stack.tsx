@@ -9,6 +9,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import PrivacyAgreementScreen from '../screens/PrivacyAgreementScreen';
 import PrivacyCollectionScreen from '../screens/PrivacyCollectionScreen';
 
+
 export type RootStackParamList = {
   MainTabs: {
     screen?: string;
@@ -28,6 +29,7 @@ export type RootStackParamList = {
     category: string;
     subcategory: string;
   };
+
   PrivacyPolicy: undefined;
   Terms: undefined;
   PrivacyAgreement: undefined;
@@ -68,6 +70,7 @@ const RootStack = () => {
           title: '개인정보수집동의서',
         }}
       />
+
     </Stack.Navigator>
   );
 };

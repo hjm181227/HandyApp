@@ -6,6 +6,7 @@ import CartScreen from '../screens/CartScreen';
 import SellerPage from '../screens/seller_page';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import TermsScreen from '../screens/TermsScreen';
+import SearchResultScreen from '../screens/SearchResultScreen';
 import { colors } from '../../colors';
 import SnapExploreScreen from "../../screens/SnapExploreScreen";
 import SnapProfileScreen from "../../screens/SnapProfileScreen";
@@ -24,6 +25,9 @@ export type ModalStackParamList = {
   SellerPage: undefined;
   PrivacyPolicy: undefined;
   Terms: undefined;
+  SearchResult: {
+    keyword: string;
+  };
   SnapExplore: {
     initialSnapId: number;
     userId?: number;
@@ -83,6 +87,11 @@ const ModalStack = () => {
       <Stack.Screen
         name="Terms"
         component={TermsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SearchResult"
+        component={SearchResultScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen name="SnapExplore" component={SnapExploreScreen} />

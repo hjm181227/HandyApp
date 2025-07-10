@@ -1,4 +1,5 @@
 import axiosInstance from './axios';
+import { ProductSearchRequest, ProductSearchResponse } from '../types/product';
 
 export interface ProductDetail {
   id: string;
@@ -17,6 +18,17 @@ export const getProductDetail = async (productId: string): Promise<ProductDetail
     return response.data;
   } catch (error) {
     console.error('상품 상세 정보 조회 실패:', error);
+    throw error;
+  }
+};
+
+// 상품 검색
+export const searchProducts = async (searchRequest: ProductSearchRequest): Promise<ProductSearchResponse> => {
+  try {
+    const response = await axiosInstance.post('/products/search', searchRequest);
+    return response.data;
+  } catch (error) {
+    console.error('상품 검색 실패:', error);
     throw error;
   }
 };

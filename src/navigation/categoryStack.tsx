@@ -2,6 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import CategoryScreen from '../screens/category';
 import CategoryProductListScreen from '../screens/CategoryProductListScreen';
+
 import { colors } from '../../colors';
 
 export type CategoryStackParamList = {
@@ -10,6 +11,7 @@ export type CategoryStackParamList = {
     category: string;
     subcategory: string;
   };
+
   ModalStack: {
     screen?: string;
     params?: any;
@@ -40,6 +42,7 @@ const CategoryStack = () => {
           title: route.params?.subcategory || '상품 목록',
         })}
       />
+
     </Stack.Navigator>
   );
 };

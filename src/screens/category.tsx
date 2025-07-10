@@ -56,9 +56,17 @@ const CategoryScreen = () => {
     <View style={styles.header}>
       <View style={styles.searchContainer}>
         <Searchbar
-          placeholder="Search"
+          placeholder="상품을 검색하세요"
           onChangeText={setSearchQuery}
           value={searchQuery}
+          onSubmitEditing={() => {
+            if (searchQuery.trim()) {
+              navigation.navigate('ModalStack', {
+                screen: 'SearchResult',
+                params: { keyword: searchQuery.trim() }
+              });
+            }
+          }}
           style={styles.searchBar}
           inputStyle={{ fontSize: 16, padding: 0, minHeight: 0 }}
         />

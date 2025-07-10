@@ -157,9 +157,17 @@ const HomeScreen = () => {
         </View>
         <View>
           <Searchbar
-            placeholder="Search"
+            placeholder="상품을 검색하세요"
             onChangeText={setSearchQuery}
             value={searchQuery}
+            onSubmitEditing={() => {
+              if (searchQuery.trim()) {
+                navigation.navigate('ModalStack', {
+                  screen: 'SearchResult',
+                  params: { keyword: searchQuery.trim() }
+                });
+              }
+            }}
             style={{ backgroundColor: 'white', borderRadius: 8, height: 40 }}
             inputStyle={{ fontSize: 16, padding: 0, minHeight: 0 }}
           />
@@ -249,7 +257,7 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   logo: {
     width: 100,
-    height: 40
+    height: 80
   },
   container: {
     flex: 1,
@@ -267,7 +275,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    // paddingVertical: 4
+    paddingVertical: 4
   },
   actionButtons: {
     flexDirection: 'row',
