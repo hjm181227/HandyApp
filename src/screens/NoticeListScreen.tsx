@@ -19,10 +19,10 @@ const NoticeListScreen = () => {
     const fetchNotices = async () => {
       try {
         setLoading(true);
-        
+
         // 실제 API 호출
         const response = await getNoticeList();
-        
+
         // 실제 API 호출 시뮬레이션
         setTimeout(() => {
           setNotices(response.data);
@@ -82,11 +82,11 @@ const NoticeListScreen = () => {
       <FlatList
         data={notices}
         renderItem={renderNoticeItem}
-        keyExtractor={(item) => item.noticeId.toString()}
+        keyExtractor={(item) => item.noticeId}
         ItemSeparatorComponent={() => <Divider />}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
-        removeClippedSubviews={true}
+        removeClippedSubviews={false}
         maxToRenderPerBatch={10}
         windowSize={10}
         initialNumToRender={10}
