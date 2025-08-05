@@ -10,7 +10,7 @@ import EmptyPlaceholderComponent from '../../components/EmptyPlaceholderComponen
 
 type ProductListScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProductList'>;
 
-const ProductListScreen = () => {
+const SellerProductListScreen = () => {
   const navigation = useNavigation<ProductListScreenNavigationProp>();
   const { userData } = useUser();
   const [products, setProducts] = useState<Product[]>([]);
@@ -84,4 +84,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProductListScreen;
+export default SellerProductListScreen;

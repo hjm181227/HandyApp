@@ -7,7 +7,8 @@ export interface Item {
   id: number;
   name: string;
   price: number;
-  imageUrl: string;
+  imageUrl?: string;
+  mainImageUrl?: string;
   description?: string;
   rank?: number;
 }
@@ -64,7 +65,7 @@ const ItemScrollBanner = ({ items, title }: { items: Item[], title: string }) =>
                 }}
               >
                 <Image
-                  source={require('../../assets/images/nail1.png')}
+                  source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../assets/images/nail1.png')}
                   style={{
                     width: itemWidth - 24,
                     height: itemWidth - 24,

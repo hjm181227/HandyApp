@@ -1,17 +1,11 @@
 import { Platform } from 'react-native';
 import axios from 'axios';
 import { API_URL, API_ENDPOINTS, getDefaultHeaders } from '../config/api';
+import { Product, ProductImage, Shape, ProductSize } from '../types/product';
 import { useUser } from "../context/UserContext";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type Shape = 'ROUND' | 'ALMOND' | 'OVAL' | 'STILETTO' | 'SQUARE' | 'COFFIN';
 export type TPO = 'daily' | 'party' | 'wedding' | 'performance';
-export type ProductSize = 'SHORT' | 'MEDIUM' | 'LONG';
-
-export interface ProductImage {
-  imageUrl: string;
-  description?: string;
-}
 
 export interface ProductUploadData {
   name: string;
@@ -28,33 +22,6 @@ export interface ProductUploadData {
   customAvailable: boolean;
 }
 
-export interface ProductData {
-  mainImage: ProductImage;
-  name: string;
-  description: string;
-  shape: Shape;
-  shapeChangable: boolean;
-  length: ProductSize;
-  lengthChangable: boolean;
-  detailImages: ProductImage[];
-  price: number;
-  productionTime: number;
-}
-
-export interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  mainImageUrl: string;
-  shapeChangable: boolean;
-  lengthChangable: boolean;
-  isCustomizable: boolean;
-  productionTime: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface ProductResponse {
   content: Product[];
   totalElements: number;
@@ -65,8 +32,33 @@ export interface ProductResponse {
 
 // 상품 등록 함수
 export const uploadProduct = async (data: ProductUploadData, token: string): Promise<Product> => {
+  console.log('uploadProduct 호출 - 원본 데이터:', data);
+  console.log('uploadProduct 호출 - mainImageUrl:', data.mainImageUrl);
+  console.log('uploadProduct 호출 - categoryIds:', data.categoryIds);
+  console.log('uploadProduct 호출 - JSON 직렬화:', JSON.stringify(data));
+  
+  // 데이터 검증 - 서버 필드명에 맞춰 조정
+  const requestData = {
+    name: data.name,
+    description: data.description,
+    shape: data.shape,
+    shapeChangeable: data.shapeChangeable,
+    size: data.size,
+    sizeChangeable: data.sizeChangeable,
+    price: data.price,
+    productionDays: data.productionDays,
+    categoryIds: data.categoryIds,
+    mainImageUrl: data.mainImageUrl,  // 서버에서 이 필드명을 인식하는지 확인 필요
+    // mainImage: data.mainImageUrl,  // 또는 이 필드명일 수도 있음
+    detailImages: data.detailImages,
+    customAvailable: data.customAvailable,
+  };
+  
+  console.log('uploadProduct 호출 - 검증된 데이터:', requestData);
+  console.log('uploadProduct 호출 - 검증된 JSON:', JSON.stringify(requestData));
+  
   try {
-    const response = await axios.post(`${API_URL}${API_ENDPOINTS.PRODUCTS}`, data, {
+    const response = await axios.post(`${API_URL}${API_ENDPOINTS.PRODUCTS}`, requestData, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
@@ -77,6 +69,10 @@ export const uploadProduct = async (data: ProductUploadData, token: string): Pro
   } catch (error) {
     console.error('Error uploading product:', error);
     if (axios.isAxiosError(error)) {
+      console.error('Axios error status:', error.response?.status);
+      console.error('Axios error data:', error.response?.data);
+      console.error('Axios error message:', error.response?.data?.message);
+      console.error('Axios error details:', JSON.stringify(error.response?.data));
       throw new Error(error.response?.data?.message || '상품 등록에 실패했습니다.');
     }
     throw error;

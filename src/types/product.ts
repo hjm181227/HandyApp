@@ -1,13 +1,29 @@
+// 공통 타입들
+export type Shape = 'ROUND' | 'ALMOND' | 'OVAL' | 'STILETTO' | 'SQUARE' | 'COFFIN';
+export type ProductSize = 'SHORT' | 'MEDIUM' | 'LONG';
+
+export interface ProductImage {
+  imageUrl: string;
+  description?: string;
+}
+
 export interface Product {
   id: number;
   name: string;
+  description: string;
   mainImageUrl: string;
   price: number;
   productionDays: number;
+  shape: Shape;
+  shapeChangeable: boolean;
+  size: ProductSize;
+  sizeChangeable: boolean;
+  customAvailable: boolean;
   isActive: boolean;
+  categoryIds: number[];
+  detailImages: ProductImage[];
   createdAt: string;
   updatedAt: string;
-  detailImages: string[];
 }
 
 export interface ProductSearchRequest {

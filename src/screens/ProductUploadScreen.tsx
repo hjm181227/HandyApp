@@ -13,7 +13,8 @@ import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { uploadProduct, Shape, ProductSize, ProductImage, ProductUploadData } from '../services/productService';
+import { uploadProduct, ProductUploadData } from '../services/productService';
+import { Shape, ProductSize, ProductImage } from '../types/product';
 import { useUser } from '../context/UserContext';
 import ImageUploader from '../components/ImageUploader';
 import { Checkbox } from 'react-native-paper';
@@ -28,7 +29,7 @@ const ProductUploadScreen = () => {
   const [productName, setProductName] = useState('');
   const [productDescription, setProductDescription] = useState('');
   const [selectedShape, setSelectedShape] = useState<Shape>('ROUND');
-  const [shapeChangable, setShapeChangable] = useState(false);
+  const [shapeChangeable, setShapeChangeable] = useState(false);
   const [selectedLength, setSelectedLength] = useState<ProductSize>('MEDIUM');
   const [lengthChangable, setLengthChangable] = useState(false);
   const [customAvailable, setCustomAvailable] = useState(false);
@@ -40,6 +41,7 @@ const ProductUploadScreen = () => {
   const handleMainImageUpload = (presignedUrl: string) => {
     const s3Url = presignedUrl.split('?')[0];
     setMainImage(s3Url);
+    console.log(mainImage);
   };
 
   const handleProductImageUpload = (presignedUrl: string) => {
@@ -104,22 +106,27 @@ const ProductUploadScreen = () => {
     try {
       setIsLoading(true);
 
+      // URL 길이 확인
+      console.log('mainImage URL 길이:', mainImage?.length);
+      console.log('mainImage URL 전체:', mainImage);
+      
       const productData: ProductUploadData = {
         name: productName,
         description: productDescription,
         shape: selectedShape,
-        shapeChangeable: shapeChangable,
+        shapeChangeable: shapeChangeable,
         size: selectedLength,
         sizeChangeable: lengthChangable,
         price: Number(price),
         productionDays: Number(productionTime),
-        categoryIds: [1], // 임시로 1번 카테고리 사용
+        categoryIds: [],
         mainImageUrl: mainImage!,
         detailImages: productImages,
         customAvailable: customAvailable,
       };
 
       console.log('상품 등록 데이터:', productData);
+      console.log('mainImage 상태 값:', mainImage);
       console.log('토큰:', token);
       await uploadProduct(productData, token);
       Alert.alert('성공', '상품이 등록되었습니다.');
@@ -170,17 +177,17 @@ const ProductUploadScreen = () => {
           onValueChange={(value) => setSelectedShape(value as Shape)}
           style={styles.picker}
         >
-          <Picker.Item label="라운드" value="round" />
-          <Picker.Item label="아몬드" value="almond" />
-          <Picker.Item label="오벌" value="oval" />
-          <Picker.Item label="스틸레토" value="stiletto" />
-          <Picker.Item label="스퀘어" value="square" />
-          <Picker.Item label="코핀" value="coffin" />
+          <Picker.Item label="라운드" value="ROUND" />
+          <Picker.Item label="아몬드" value="ALMOND" />
+          <Picker.Item label="오벌" value="OVAL" />
+          <Picker.Item label="스틸레토" value="STILETTO" />
+          <Picker.Item label="스퀘어" value="SQUARE" />
+          <Picker.Item label="코핀" value="COFFIN" />
         </Picker>
         <View style={styles.checkboxContainer}>
           <Checkbox
-            status={shapeChangable ? 'checked' : 'unchecked'}
-            onPress={() => setShapeChangable(!shapeChangable)}
+            status={shapeChangeable ? 'checked' : 'unchecked'}
+            onPress={() => setShapeChangeable(!shapeChangeable)}
           />
           <Text style={styles.checkboxLabel}>쉐입 변경 가능</Text>
         </View>

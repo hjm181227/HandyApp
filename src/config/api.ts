@@ -8,7 +8,7 @@ const getBaseUrl = () => {
     }
     return 'http://localhost:8080/api';    // iOS 시뮬레이터
   }
-  return 'https://api.handyapp.com/api';   // 프로덕션 환경
+  return 'https://15.165.22.118/api';   // 프로덕션 환경
 };
 
 export const API_URL = getBaseUrl();

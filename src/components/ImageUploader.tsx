@@ -98,17 +98,25 @@ const ImageUploader = forwardRef<ImageUploaderRef, ImageUploaderProps>(({
     try {
       setLoading(true);
       const fileName = `product_${Date.now()}.jpg`;
+      console.log('이미지 업로드 시작 - fileName:', fileName);
+      
       const presignedUrl = await getPresignedUrl(fileName);
+      console.log('받은 presignedUrl:', presignedUrl);
 
       const response = await fetch(uri);
       const blob = await response.blob();
+      console.log('Blob 생성 완료 - size:', blob.size);
 
-      await fetch(presignedUrl, {
+      console.log('S3 업로드 시작...');
+      const uploadResponse = await fetch(presignedUrl, {
         method: 'PUT',
         body: blob,
       });
+      console.log('S3 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
 
       const s3Url = presignedUrl.split('?')[0];
+      console.log('생성된 s3Url:', s3Url);
+      
       setImageUrl(s3Url);
       onImageChanged?.(s3Url);
       onUploadSuccess?.(s3Url);

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { Icon, Searchbar } from "react-native-paper";
 import HandyColors from "../../colors";
 import ItemScrollBanner from "../components/item-scroll-banner";
@@ -8,123 +8,50 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/stack';
 import ProductCard from '../components/ProductCard';
+import { getProductList } from '../api/product';
+import { Product } from '../types/product';
 
-// 임시 상품 데이터 타입
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  imageUrl: string;
-  description: string;
-  rank?: number;
-};
-
-// 임시 추천 상품 데이터
-const recommendedProducts: Product[] = [
-  {
-    id: 1,
-    name: '클래식 네일',
-    price: 35000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '클래식한 디자인의 네일'
-  },
-  {
-    id: 2,
-    name: '아트 네일',
-    price: 45000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '예술적인 디자인의 네일'
-  },
-  {
-    id: 3,
-    name: '심플 네일',
-    price: 30000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '심플한 디자인의 네일'
-  },
-  {
-    id: 4,
-    name: '글리터 네일',
-    price: 40000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '반짝이는 글리터 네일'
-  },
-  {
-    id: 5,
-    name: '메탈릭 네일',
-    price: 42000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '메탈릭한 느낌의 네일'
-  },
-  {
-    id: 6,
-    name: '젤 네일',
-    price: 38000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '젤 타입의 네일'
-  },
-];
-
-// 임시 랭킹 상품 데이터
-const rankingProducts: Product[] = [
-  {
-    id: 1,
-    name: '클래식 네일',
-    price: 35000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '클래식한 디자인의 네일',
-    rank: 1
-  },
-  {
-    id: 2,
-    name: '아트 네일',
-    price: 45000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '예술적인 디자인의 네일',
-    rank: 2
-  },
-  {
-    id: 3,
-    name: '심플 네일',
-    price: 30000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '심플한 디자인의 네일',
-    rank: 3
-  },
-  {
-    id: 4,
-    name: '글리터 네일',
-    price: 40000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '반짝이는 글리터 네일',
-    rank: 4
-  },
-  {
-    id: 5,
-    name: '메탈릭 네일',
-    price: 42000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '메탈릭한 느낌의 네일',
-    rank: 5
-  },
-  {
-    id: 6,
-    name: '젤 네일',
-    price: 38000,
-    imageUrl: 'https://via.placeholder.com/150',
-    description: '젤 타입의 네일',
-    rank: 6
-  },
-];
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const HomeScreen = () => {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const [ searchQuery, setSearchQuery ] = React.useState('');
-  const [ selectedTab, setSelectedTab ] = useState<'recommended' | 'ranking'>('recommended');
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTab, setSelectedTab] = useState<'recommended' | 'ranking'>('recommended');
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [rankingProducts, setRankingProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const tabNames = {
     recommended: '추천',
     ranking: '랭킹',
-  }
+  };
+
+  // 상품 데이터 로드
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        
+        // 추천 상품 로드 (RECOMMEND)
+        const recommendedResponse = await getProductList(6, 'RECOMMEND');
+        setRecommendedProducts(recommendedResponse.data);
+        
+        // 랭킹 상품 로드 (CREATED_AT_DESC)
+        const rankingResponse = await getProductList(6, 'CREATED_AT_DESC');
+        setRankingProducts(rankingResponse.data);
+        
+      } catch (error) {
+        console.error('상품 데이터 로드 실패:', error);
+        // 에러 시 빈 배열로 설정
+        setRecommendedProducts([]);
+        setRankingProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   const renderTabButton = (tab: 'recommended' | 'ranking', label: string) => (
     <TouchableOpacity
@@ -137,6 +64,17 @@ const HomeScreen = () => {
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={HandyColors.primary90} />
+          <Text style={styles.loadingText}>상품을 불러오는 중...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topSection}>
@@ -147,7 +85,6 @@ const HomeScreen = () => {
             resizeMode="contain"
           />
           <View style={styles.actionButtons}>
-            {/*<Icon source={'bell-outline'} size={22} color={'white'}/>*/}
             <TouchableOpacity onPress={() => navigation.navigate('ModalStack', {
               screen: 'Cart'
             })}>
@@ -197,19 +134,19 @@ const HomeScreen = () => {
                 />
               </TouchableOpacity>
             </View>
-            <ItemScrollBanner items={recommendedProducts} title={'추천 상품'} />
-            <ItemScrollBanner items={rankingProducts} title={'베스트 셀러'} />
+            <ItemScrollBanner items={recommendedProducts.map(p => ({ ...p, imageUrl: p.mainImageUrl }))} title={'추천 상품'} />
+            <ItemScrollBanner items={rankingProducts.map(p => ({ ...p, imageUrl: p.mainImageUrl }))} title={'베스트 셀러'} />
           </>
         ) : (
           <View style={styles.productGrid}>
-            {rankingProducts.map((product) => (
+            {rankingProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
                 id={product.id.toString()}
                 name={product.name}
                 price={product.price}
-                imageUrl={product.imageUrl}
-                rank={product.rank}
+                imageUrl={product.mainImageUrl}
+                rank={index + 1}
               />
             ))}
           </View>
@@ -249,20 +186,25 @@ const HomeScreen = () => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 };
 
-export default HomeScreen;
-
 const styles = StyleSheet.create({
-  logo: {
-    width: 100,
-    height: 80
-  },
   container: {
     flex: 1,
     justifyContent: 'flex-start',
     backgroundColor: HandyColors.surface
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: HandyColors.surface
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: HandyColors.grayLight,
   },
   topSection: {
     padding: 12,
@@ -276,6 +218,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     paddingVertical: 4
+  },
+  logo: {
+    width: 100,
+    height: 80
   },
   actionButtons: {
     flexDirection: 'row',
@@ -346,13 +292,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   companyInfo: {
-    alignItems: 'center',
     marginBottom: 20,
   },
   companyName: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: '#333',
   },
   companyDetail: {
     fontSize: 12,
@@ -365,3 +311,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default HomeScreen;

@@ -1,18 +1,7 @@
 import axiosInstance from './axios';
-import { ProductSearchRequest, ProductSearchResponse } from '../types/product';
+import { Product, ProductSearchRequest, ProductSearchResponse } from '../types/product';
 
-export interface ProductDetail {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-  imageUrl: string;
-  isActive: boolean;
-  createdAt: string;
-  // 필요한 다른 상품 상세 정보들도 여기에 추가
-}
-
-export const getProductDetail = async (productId: string): Promise<ProductDetail> => {
+export const getProductDetail = async (productId: string): Promise<Product> => {
   try {
     const response = await axiosInstance.get(`/products/${productId}`);
     return response.data;
@@ -29,6 +18,22 @@ export const searchProducts = async (searchRequest: ProductSearchRequest): Promi
     return response.data;
   } catch (error) {
     console.error('상품 검색 실패:', error);
+    throw error;
+  }
+};
+
+// 상품 목록 조회
+export const getProductList = async (listNum: number, sort: 'CREATED_AT_DESC' | 'RECOMMEND'): Promise<ProductSearchResponse> => {
+  try {
+    const response = await axiosInstance.get('/products/list', {
+      params: {
+        listNum,
+        sort
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('상품 목록 조회 실패:', error);
     throw error;
   }
 };

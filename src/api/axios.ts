@@ -28,9 +28,9 @@ export const authEventEmitter = {
 
 // 개발 환경에 따른 baseURL 설정
 const baseURL = Platform.select({
-  ios: 'http://localhost:8080/api',
-  android: 'http://10.0.2.2:8080/api',
-  default: 'http://localhost:8080/api',
+  ios: 'http://192.168.231.125:8080/api',
+  android: 'http://192.168.231.125:8080/api',
+  default: 'http://192.168.231.125:8080/api',
 });
 
 const axiosInstance = axios.create({

@@ -8,7 +8,7 @@ import { RootStackParamList } from '../navigation/stack';
 import HandyColors from "../../colors";
 
 // Import screens
-import ProductListScreen from './seller/ProductListScreen';
+import SellerProductListScreen from './seller/SellerProductListScreen';
 import OrderManagementScreen from './seller/OrderManagementScreen';
 import DashboardScreen from './seller/DashboardScreen';
 import ProductInquiryScreen from './seller/ProductInquiryScreen';
@@ -48,7 +48,7 @@ const SellerPage = () => {
     >
       <Drawer.Screen
         name="ProductList"
-        component={ProductListScreen}
+        component={SellerProductListScreen}
         options={{
           title: '상품 목록',
           drawerLabel: '상품 목록',
